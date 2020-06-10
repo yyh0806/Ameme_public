@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-#-*- coding:utf-8 -*-
+import setuptools
 
 #############################################
 # File Name: setup.py
@@ -7,24 +6,22 @@
 # Mail:
 # Created Time:  2020/6/11
 #############################################
+with open("README.md", "r") as fh:
+    long_description = fh.read()
 
-
-from setuptools import setup, find_packages
-
-setup(
-    name = "magetool",
-    version = "0.1.0",
-    keywords = ("pip", "pathtool","timetool", "magetool", "mage"),
-    description = "time and path tool",
-    long_description = "time and path tool",
-    license = "MIT Licence",
-
-    url = "https://github.com/fengmm521/pipProject",
-    author = "mage",
-    author_email = "mage@woodcol.com",
-
-    packages = find_packages(),
-    include_package_data = True,
-    platforms = "any",
-    install_requires = []
+setuptools.setup(
+    name="Ameme",
+    version="0.0.1",
+    author="yangyuhui",
+    author_email="yangyuhui@jaist.ac.jp",
+    description="my tools",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/yyh0806/Ameme",
+    packages=setuptools.find_packages(),
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ],
 )
