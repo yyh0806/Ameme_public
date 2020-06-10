@@ -1,0 +1,8 @@
+setup.py
+Ameme/Trainer.py
+Ameme/TrainerConfig.py
+Ameme/__init__.py
+Ameme.egg-info/PKG-INFO
+Ameme.egg-info/SOURCES.txt
+Ameme.egg-info/dependency_links.txt
+Ameme.egg-info/top_level.txt
