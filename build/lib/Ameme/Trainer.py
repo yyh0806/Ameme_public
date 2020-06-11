@@ -1,9 +1,9 @@
 from torch.utils.data import DataLoader
 from torch.optim import optimizer
-from metrics import AverageMeter, RocAucMeter
+from .metrics import AverageMeter, RocAucMeter
 from torch import nn
 import torch
-import TrainerConfig
+from .TrainerConfig import TrainerConfig
 import tqdm
 
 

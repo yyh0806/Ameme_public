@@ -1,3 +1,4 @@
+README.md
 setup.py
 Ameme/Trainer.py
 Ameme/TrainerConfig.py

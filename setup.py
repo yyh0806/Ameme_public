@@ -11,7 +11,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="Ameme",
-    version="0.0.1",
+    version="0.0.2",
     author="yangyuhui",
     author_email="yangyuhui@jaist.ac.jp",
     description="my tools",
