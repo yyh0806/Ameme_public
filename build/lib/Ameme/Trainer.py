@@ -23,8 +23,8 @@ class Trainer:
     def train_one_epoch(self):
         self.model.train()
 
-        summary_loss = AverageMeter()
-        final_scores = RocAucMeter()
+        summary_loss = AverageMeter.AverageMeter()
+        final_scores = RocAucMeter.RocAucMeter()
 
         for samples, targets in tqdm(self.trainLoader):
             samples = samples.to(self.device).float()
@@ -46,8 +46,8 @@ class Trainer:
     def validation(self):
         self.model.eval()
 
-        summary_loss = AverageMeter()
-        final_scores = RocAucMeter()
+        summary_loss = AverageMeter.AverageMeter()
+        final_scores = RocAucMeter.RocAucMeter()
 
         for samples, targets in tqdm(self.validLoader):
             with torch.no_grad():
