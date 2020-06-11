@@ -7,3 +7,8 @@ Ameme.egg-info/PKG-INFO
 Ameme.egg-info/SOURCES.txt
 Ameme.egg-info/dependency_links.txt
 Ameme.egg-info/top_level.txt
+Ameme/losses/LabelSmoothing.py
+Ameme/losses/__init__.py
+Ameme/metrics/AverageMeter.py
+Ameme/metrics/RocAucMeter.py
+Ameme/metrics/__init__.py
