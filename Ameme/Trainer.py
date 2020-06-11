@@ -4,7 +4,7 @@ from .metrics import AverageMeter, RocAucMeter
 from torch import nn
 import torch
 from .TrainerConfig import TrainerConfig
-import tqdm
+from tqdm import tqdm
 
 
 class Trainer:
