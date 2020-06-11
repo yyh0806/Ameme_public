@@ -1,6 +1,7 @@
 from torch.utils.data import DataLoader
 from torch.optim import optimizer
-from .metrics import AverageMeter, RocAucMeter
+from .metrics.AverageMeter import AverageMeter
+from .metrics.RocAucMeter import RocAucMeter
 from torch import nn
 import torch
 from .TrainerConfig import TrainerConfig
