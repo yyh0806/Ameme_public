@@ -1,6 +1,44 @@
+from .Trainer import *
 import numpy as np
-from torch import nn
 from sklearn import metrics
+from torch import nn
+
+
+class Meter:
+
+    def reset(self): pass
+
+    def update(self, trainer): pass
+
+    @property
+    def value(self): raise NotImplementedError
+
+    @property
+    def name(self): raise NotImplementedError
+
+
+class AvgLossMeter(Meter):
+
+    def __init__(self):
+        self.total = 0.
+        self.count = 0
+
+    def reset(self):
+        self.total = 0.
+        self.count = 0
+
+    def update(self, trainer):
+        batchSize = trainer.batchSize
+        self.total += trainer.loss.detach().mean() * batchSize
+        self.count += batchSize
+
+    @property
+    def value(self):
+        return self.total / self.count if self.count != 0 else None
+
+    @property
+    def name(self):
+        return 'AvgLossMeter'
 
 
 def alaska_weighted_auc(y_true, y_valid):
@@ -38,24 +76,31 @@ def alaska_weighted_auc(y_true, y_valid):
     return competition_metric / normalization
 
 
-class RocAucMeter(object):
+class RocAucMeter(Meter):
+
     def __init__(self):
         self.y_true = np.array([0, 1])
         self.y_pred = np.array([0.5, 0.5])
         self.score = 0
+        self.targets = None
+        self.outputs = None
 
     def reset(self):
         self.y_true = np.array([0, 1])
         self.y_pred = np.array([0.5, 0.5])
         self.score = 0
 
-    def update(self, y_true, y_pred):
-        y_true = y_true.cpu().numpy().argmax(axis=1).clip(min=0, max=1).astype(int)
-        y_pred = 1 - nn.functional.softmax(y_pred, dim=1).data.cpu().numpy()[:, 0]
-        self.y_true = np.hstack((self.y_true, y_true))
-        self.y_pred = np.hstack((self.y_pred, y_pred))
-        self.score = alaska_weighted_auc(self.y_true, self.y_pred)
+    def update(self, trainer):
+        targets = trainer.targets.cpu().numpy().argmax(axis=1).clip(min=0, max=1).astype(int)
+        outputs = 1 - nn.functional.softmax(trainer.outputs, dim=1).data.cpu().numpy()[:, 0]
+        self.targets = np.hstack((self.targets, targets))
+        self.outputs = np.hstack((self.outputs, outputs))
+        self.score = alaska_weighted_auc(self.targets, self.outputs)
 
     @property
-    def avg(self):
+    def value(self):
         return self.score
+
+    @property
+    def name(self):
+        return 'ALASKA_RocAucMeter'

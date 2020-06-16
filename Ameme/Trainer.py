@@ -1,6 +1,6 @@
 from torch.utils.data import DataLoader
 from torch.optim import optimizer
-from .metrics import AverageMeter, RocAucMeter
+from .Meters import *
 from torch import nn
 import torch
 from .TrainerConfig import TrainerConfig
@@ -10,7 +10,7 @@ from tqdm import tqdm
 class Trainer:
 
     def __init__(self, model, trainLoader: DataLoader, validLoader: DataLoader, device: torch.device,
-                 optim: optimizer, criterion: nn.Module, config: TrainerConfig = None, meters: dict = None):
+                 optim: optimizer, criterion: nn.Module, meters=[], config: TrainerConfig = None):
         self.model = model
         self.trainLoader = trainLoader
         self.validLoader = validLoader
@@ -18,54 +18,76 @@ class Trainer:
         self.config = config
         self.optimizer = optim
         self.criterion = criterion.to(self.device)
-        self.meters = meters
+
+        self.batchSize = config.batch_size
+        self.loss = 0
+        self.targets = None
+        self.outputs = None
+
+        self._meters = meters
+
+    @property
+    def meters(self):
+        return self._meters
+
+    @meters.setter
+    def meters(self, value):
+        self._meters = value
 
     def train_one_epoch(self):
         self.model.train()
 
-        summary_loss = AverageMeter.AverageMeter()
-        final_scores = RocAucMeter.RocAucMeter()
+        res_meters = []
 
         for samples, targets in tqdm(self.trainLoader):
             samples = samples.to(self.device).float()
             targets = targets.to(self.device).float()
-            batchSize = samples.shape[0]
 
             self.optimizer.zero_grad()
             outputs = self.model(samples)
             loss = self.criterion(outputs, targets)
+            self.loss = loss
+            self.targets = targets
+            self.outputs = outputs
             loss.backward()
-
-            final_scores.update(targets, outputs)
-            summary_loss.update(loss.detach().item(), batchSize)
 
             self.optimizer.step()
 
-        return summary_loss, final_scores
+            for meter in self._meters:
+                meter.update(self)
+                res_meters.append(meter)
+
+        return res_meters
 
     def validation(self):
         self.model.eval()
 
-        summary_loss = AverageMeter.AverageMeter()
-        final_scores = RocAucMeter.RocAucMeter()
+        res_meters = []
 
         for samples, targets in tqdm(self.validLoader):
             with torch.no_grad():
                 samples = samples.to(self.device).float()
                 targets = targets.to(self.device).float
-                batch_size = samples.shape[0]
+
                 outputs = self.model(samples)
                 loss = self.criterion(outputs, targets)
 
-                summary_loss.update(loss.detach().item(), batch_size)
-                final_scores.update(targets, outputs)
+                self.loss = loss
+                self.targets = targets
+                self.outputs = outputs
 
-        return summary_loss, final_scores
+                for meter in self._meters:
+                    meter.update(self)
+                    res_meters.append(meter)
+
+        return res_meters
 
     def fit(self, epochs: int = 20):
         if self.config is not None and self.config.n_epochs > 0:
             for ep in range(self.config.n_epochs):
-                summary_loss, final_scores = self.train_one_epoch()
-                print("loss:", summary_loss, "score:", final_scores)
-                summary_loss, final_scores = self.validation()
-                print("loss:", summary_loss, "score:", final_scores)
+                res_meters = self.train_one_epoch()
+                for meter in res_meters:
+                    print(meter.value)
+                res_meters = self.validation()
+
+
