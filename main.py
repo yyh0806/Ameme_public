@@ -19,9 +19,18 @@ def setup() -> object:
     logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     # UI
-    st.sidebar.title(cfg.SIDEBAR.TITLE)
-    selected_dataset = st.selectbox('Select', os.listdir(cfg.SIDEBAR.SUBHEADER_DATAPATH))
+    setupUI()
+
     return cfg
+
+
+def setupUI() -> object:
+    #sidebar
+    st.sidebar.title(cfg.SIDEBAR.TITLE)
+
+    #main
+
+    return 0
 
 
 def main():

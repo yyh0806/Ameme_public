@@ -7,18 +7,25 @@ import os
 from yacs.config import CfgNode as CN
 
 _C = CN()
-
+#train
 _C.TRAIN = CN()
 _C.TRAIN.NUM_WORKERS = 0
 _C.TRAIN.MAX_EPOCHS = 25
 _C.TRAIN.LR = 0.001
-
+_C.TRAIN.SAVE_PERIOD = 10
+_C.TRAIN.VERBOSE = 0
+#dataset
 _C.DATASET = CN()
 _C.DATASET.BATCH_SIZE = 16
 
+#sidebar
 _C.SIDEBAR = CN()
 _C.SIDEBAR.TITLE = "AMEME"
-_C.SIDEBAR.SUBHEADER_DATAPATH = "Ameme/dataset"
+_C.SIDEBAR.SUBHEADER_DATAPATH = "./dataset"
+
+#logging
+_C.LOGGING = CN()
+
 
 def get_cfg_defaults():
     """Get a yacs CfgNode object with default values for my_project."""
