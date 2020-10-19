@@ -5,7 +5,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 
-from .datasets import (
+from .dataset import (
     SteelDatasetTrainVal,
     SteelDatasetTest,
     SteelDatasetPseudo,

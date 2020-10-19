@@ -11,13 +11,13 @@ import os
 import streamlit as st
 import torch
 from log import logger
-import models.model as module_model
+import models.craft_model as module_model
 import models.loss as module_loss
 import models.metric as module_metric
 import models.optimizer as module_optimizer
 import models.scheduler as module_scheduler
 import dataset.augmentation as module_aug
-import dataset.data_loaders as module_data
+import dataset.dataloader as module_data
 from train.trainer import Trainer
 from log.logger import setup_logger, setup_logging
 from utils import get_instance
@@ -42,8 +42,7 @@ class Ameme:
         model = model.to(device)
         torch.backends.cudnn.benchmark = True
         self.logger.debug("Building optimizer")
-        params = self._setup_param_groups(model, cfg)
-        optimizer = get_instance(module_optimizer, cfg.OPTIMIZER.NAME, cfg.OPTIMIZER.PARAMS, params)
+        optimizer = get_instance(module_optimizer, cfg.OPTIMIZER.NAME, cfg.OPTIMIZER.PARAMS)
         self.logger.debug("Building lr scheduler")
         lr_scheduler = get_instance(module_scheduler, cfg.LR_SCHEDULER.NAME, cfg.LR_SCHEDULER.PARAMS, optimizer)
         self.logger.debug("Getting augmentations")
@@ -65,47 +64,5 @@ class Ameme:
                           lr_scheduler=lr_scheduler)
         trainer.train()
         self.logger.debug("Finished")
-
-    def _setup_param_groups(self, model, config):
-        """
-        Originally this selectively applied weight decay to non-bias parameters,
-        but this hurt performance.
-        """
-        encoder_opts = config['OPTIMIZER']['ENCODER']
-        decoder_opts = config['OPTIMIZER']['DECODER']
-
-        encoder_weight_params = []
-        encoder_bias_params = []
-        decoder_weight_params = []
-        decoder_bias_params = []
-
-        for name, param in model.encoder.named_parameters():
-            if name.endswith('bias'):
-                encoder_bias_params.append(param)
-            else:
-                encoder_weight_params.append(param)
-
-        for name, param in model.decoder.named_parameters():
-            if name.endswith('bias'):
-                decoder_bias_params.append(param)
-            else:
-                decoder_weight_params.append(param)
-
-        self.logger.info(f'Found {len(encoder_weight_params)} encoder weight params')
-        self.logger.info(f'Found {len(encoder_bias_params)} encoder bias params')
-        self.logger.info(f'Found {len(decoder_weight_params)} decoder weight params')
-        self.logger.info(f'Found {len(decoder_bias_params)} decoder bias params')
-
-        params = [
-            {'params': encoder_weight_params, **encoder_opts},
-            {'params': decoder_weight_params, **decoder_opts},
-            {'params': encoder_bias_params,
-             'lr': encoder_opts['lr'],
-             'weight_decay': encoder_opts['weight_decay']},
-            {'params': decoder_bias_params,
-             'lr': decoder_opts['lr'],
-             'weight_decay': decoder_opts['weight_decay']},
-        ]
-        return params
 
 Ameme(cfg).train()
