@@ -9,37 +9,103 @@ import logging
 import sys
 import os
 import streamlit as st
+import torch
+from log import logger
+import models.model as module_model
+import models.loss as module_loss
+import models.metric as module_metric
+import models.optimizer as module_optimizer
+import models.scheduler as module_scheduler
+import dataset.augmentation as module_aug
+import dataset.data_loaders as module_data
+from train.trainer import Trainer
+from log.logger import setup_logger, setup_logging
+from utils import get_instance
 
 
-def setup() -> object:
-    # config
-    cfg.merge_from_file("Ameme.yaml")
-    cfg.freeze()
-    # logging
-    logging.basicConfig(stream=sys.stdout, level=logging.INFO,
-                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    # UI
-    setupUI()
+class Ameme:
 
-    return cfg
+    def __init__(self, config):
+        setup_logging(config)
+        self.logger = setup_logger(self, config.TRAIN.VERBOSE)
+        self.config = config
 
+    def train(self):
+        config = self.config
+        device_id = config.TRAIN.DEVICE
+        self.logger.debug("Building models")
+        model = get_instance(module_model, cfg.MODEL.NAME, cfg.MODEL[cfg.MODEL.NAME])
+        device_ids = list(range(torch.cuda.device_count()))
+        self.logger.debug(f'Using device {device_id} of {device_ids}')
+        device = torch.device(f'cuda:{device_id}')
+        torch.cuda.set_device(device)
+        model = model.to(device)
+        torch.backends.cudnn.benchmark = True
+        self.logger.debug("Building optimizer")
+        params = self._setup_param_groups(model, cfg)
+        optimizer = get_instance(module_optimizer, cfg.OPTIMIZER.NAME, cfg.OPTIMIZER.PARAMS, params)
+        self.logger.debug("Building lr scheduler")
+        lr_scheduler = get_instance(module_scheduler, cfg.LR_SCHEDULER.NAME, cfg.LR_SCHEDULER.PARAMS, optimizer)
+        self.logger.debug("Getting augmentations")
+        transforms = get_instance(module_aug, cfg.AUGMENTATION.NAME, cfg.AUGMENTATION.PARAMS)
+        self.logger.debug("Getting dataloader instance")
+        data_loader = get_instance(module_data, cfg.DATASET.NAME, cfg.DATASET.PARAMS, transforms)
+        valid_data_loader = data_loader.split_validation()
+        self.logger.debug("Getting loss")
+        loss = get_instance(module_loss, cfg.LOSS.NAME, cfg.LOSS.PARAMS)
+        loss.to(device)
+        self.logger.debug("Getting metrics")
+        metrics = [getattr(module_metric, met) for met in cfg.METRICS]
+        self.logger.debug("Initialising trainer")
+        trainer = Trainer(model, loss, metrics, optimizer,
+                          config=config,
+                          device=device,
+                          trainLoader=data_loader,
+                          validLoader=valid_data_loader,
+                          lr_scheduler=lr_scheduler)
+        trainer.train()
+        self.logger.debug("Finished")
 
-def setupUI() -> object:
-    #sidebar
-    st.sidebar.title(cfg.SIDEBAR.TITLE)
+    def _setup_param_groups(self, model, config):
+        """
+        Originally this selectively applied weight decay to non-bias parameters,
+        but this hurt performance.
+        """
+        encoder_opts = config['OPTIMIZER']['ENCODER']
+        decoder_opts = config['OPTIMIZER']['DECODER']
 
-    #main
+        encoder_weight_params = []
+        encoder_bias_params = []
+        decoder_weight_params = []
+        decoder_bias_params = []
 
-    return 0
+        for name, param in model.encoder.named_parameters():
+            if name.endswith('bias'):
+                encoder_bias_params.append(param)
+            else:
+                encoder_weight_params.append(param)
 
+        for name, param in model.decoder.named_parameters():
+            if name.endswith('bias'):
+                decoder_bias_params.append(param)
+            else:
+                decoder_weight_params.append(param)
 
-def main():
-    config = setup()
+        self.logger.info(f'Found {len(encoder_weight_params)} encoder weight params')
+        self.logger.info(f'Found {len(encoder_bias_params)} encoder bias params')
+        self.logger.info(f'Found {len(decoder_weight_params)} decoder weight params')
+        self.logger.info(f'Found {len(decoder_bias_params)} decoder bias params')
 
-    x = st.slider('x')  # 👈 this is a widget
-    st.write(x, 'squared is', x * x)
-    st.sidebar.selectbox('hhhh', ("email", "phone"))
+        params = [
+            {'params': encoder_weight_params, **encoder_opts},
+            {'params': decoder_weight_params, **decoder_opts},
+            {'params': encoder_bias_params,
+             'lr': encoder_opts['lr'],
+             'weight_decay': encoder_opts['weight_decay']},
+            {'params': decoder_bias_params,
+             'lr': decoder_opts['lr'],
+             'weight_decay': decoder_opts['weight_decay']},
+        ]
+        return params
 
-
-if __name__ == "__main__":
-    main()
+Ameme(cfg).train()

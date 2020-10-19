@@ -26,7 +26,7 @@ class Trainer(BaseTrainer):
         losses_iou = AverageMeter('loss_iou')
         metrics = [AverageMeter(m.__name__) for m in self.metrics]
 
-        for batch_idx, (samples, targets) in tqdm(self.trainLoader):
+        for batch_idx, (samples, targets) in tqdm(enumerate(self.trainLoader)):
             samples = samples.to(self.device)
             targets = targets.to(self.device)
 
@@ -47,31 +47,80 @@ class Trainer(BaseTrainer):
             losses_dice.update(dice.item(), samples.size(0))
             losses_iou.update(iou.item(), samples.size(0))
 
+            for i, value in enumerate(self._eval_metrics(outputs, targets)):
+                metrics[i].update(value, samples.size(0))
+            self._log_batch(epoch, batch_idx, self.trainLoader.bs, len(self.trainLoader), loss.item())
+
         del samples
         del targets
         del outputs
         torch.cuda.empty_cache()
 
+        log = {
+            'loss': losses_comb.avg,
+            'metrics': [m.avg for m in metrics]
+        }
+
         if self.is_validation:
-            self._valid_epoch(epoch)
+            val_log = self._valid_epoch(epoch)
+            log = {**log, **val_log}
 
         if self.lr_scheduler is not None:
             self.lr_scheduler.step()
 
-    def _valid_epoch(self):
+        return log
+
+    def _log_batch(self, epoch, batch_idx, batch_size, len_data, loss):
+        n_samples = batch_size * len_data
+        n_complete = batch_idx * batch_size
+        percent = 100.0 * batch_idx / len_data
+        msg = f'Train Epoch: {epoch} [{n_complete}/{n_samples} ({percent:.0f}%)] Loss: {loss:.6f}'
+        self.logger.debug(msg)
+
+    def _eval_metrics(self, output, target):
+        with torch.no_grad():
+            for i, metric in enumerate(self.metrics):
+                value = metric(output, target)
+                yield value
+
+    def _valid_epoch(self, epoch):
         self.model.eval()
+
+        losses_comb = AverageMeter('loss_comb')
+        losses_bce = AverageMeter('loss_bce')
+        losses_dice = AverageMeter('loss_dice')
+        losses_iou = AverageMeter('loss_iou')
+        metrics = [AverageMeter(m.__name__) for m in self.metrics]
+
         with torch.no_grad():
             for samples, targets in tqdm(self.validLoader):
                 samples = samples.to(self.device)
                 targets = targets.to(self.device)
 
                 outputs = self.model(samples)
-                loss = self.loss(outputs, targets)
+                loss_dict = self.loss(outputs, targets)
+                loss = loss_dict['loss']
+                bce = loss_dict.get('bce', torch.tensor([0]))
+                dice = loss_dict.get('dice', torch.tensor([0]))
+                iou = loss_dict.get('iou', torch.tensor([0]))
+
+                losses_comb.update(loss.item(), samples.size(0))
+                losses_bce.update(bce.item(),   samples.size(0))
+                losses_dice.update(dice.item(), samples.size(0))
+                losses_iou.update(iou.item(), samples.size(0))
+
+                for i, value in enumerate(self._eval_metrics(outputs, targets)):
+                    metrics[i].update(value, samples.size(0))
 
         del samples
         del targets
         del outputs
         torch.cuda.empty_cache()
+
+        return {
+            'val_loss': losses_comb.avg,
+            'val_metrics': [m.avg for m in metrics]
+        }
 
 
 class AverageMeter(object):
