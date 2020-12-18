@@ -7,6 +7,7 @@ import os
 from yacs.config import CfgNode as CN
 
 _C = CN()
+
 #train
 _C.TRAIN = CN()
 _C.TRAIN.NUM_WORKERS = 0
@@ -14,6 +15,8 @@ _C.TRAIN.MAX_EPOCHS = 25
 _C.TRAIN.LR = 0.001
 _C.TRAIN.SAVE_PERIOD = 10
 _C.TRAIN.VERBOSE = 0
+_C.TRAIN.SAVE_DIR = "./checkpoint"
+
 #dataset
 _C.DATASET = CN()
 _C.DATASET.BATCH_SIZE = 16

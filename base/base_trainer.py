@@ -1,6 +1,7 @@
 import os
 import math
 import shutil
+from abc import abstractmethod
 
 import yaml
 import torch
@@ -8,15 +9,16 @@ import torch
 from log.logger import setup_logger
 
 
-class BaseTrainer:
+class TrainerBase:
     """
     Base class for all trainers
     """
-    def __init__(self, model, loss, metrics, optimizer, config, device):
+
+    def __init__(self, model, criterion, metrics, optimizer, config, device):
         self.logger = setup_logger(self, verbose=config.TRAIN.VERBOSE)
         self.model = model
         self.device = device
-        self.loss = loss
+        self.criterion = criterion
         self.metrics = metrics
         self.optimizer = optimizer
         self.config = config
@@ -24,8 +26,11 @@ class BaseTrainer:
         self.epochs = config.TRAIN.MAX_EPOCHS
         self.save_period = config.TRAIN.SAVE_PERIOD
 
-        self.start_epoch = 0
+        self.start_epoch = 1
 
+        self.checkpoint_dir = config.TRAIN.SAVE_DIR
+
+    @abstractmethod
     def _train_epoch(self, epoch):
         """
         Training logic for an epoch
@@ -39,6 +44,7 @@ class BaseTrainer:
         for epoch in range(self.start_epoch, self.epochs):
             result = self._train_epoch(epoch)
             log = {'epoch': epoch}
+            log.update(result)
             for key, value in result.items():
                 if key == 'metrics':
                     log.update({mtr.__name__: value[i] for i, mtr in enumerate(self.metrics)})
