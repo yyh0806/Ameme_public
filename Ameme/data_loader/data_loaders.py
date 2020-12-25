@@ -3,7 +3,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
 from torchvision import datasets
 
-from ocr.base import DataLoaderBase
+from Ameme.base import DataLoaderBase
 
 
 class MnistDataLoader(DataLoaderBase):

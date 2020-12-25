@@ -3,11 +3,11 @@ import math
 
 import yaml
 import torch
+from tqdm import tqdm
 
-from ocr.utils import (
+from Ameme.utils import (
     setup_logger,
-    trainer_paths,
-    TensorboardWriter
+    trainer_paths
 )
 
 
@@ -30,7 +30,6 @@ class TrainerBase:
         self._setup_monitoring(config['training'])
 
         self.checkpoint_dir, writer_dir = trainer_paths(config)
-        self.writer = TensorboardWriter(writer_dir, config['training']['tensorboard'])
 
         # Save configuration file into checkpoint directory:
         config_save_path = Path(self.checkpoint_dir) / 'config.yml'
@@ -43,7 +42,7 @@ class TrainerBase:
         Full training logic
         """
         log.info('Starting training...')
-        for epoch in range(self.start_epoch, self.epochs):
+        for epoch in tqdm(range(self.start_epoch, self.epochs)):
             result = self._train_epoch(epoch)
 
             # save logged informations into log dict

@@ -9,13 +9,14 @@ import torch.nn as nn
 import torch.optim as module_optimizer
 import torch.optim.lr_scheduler as module_scheduler
 
-import ocr.data_loader.augmentation as module_aug
-import ocr.data_loader.data_loaders as module_data
-import ocr.model.loss as module_loss
-import ocr.model.metric as module_metric
-import ocr.model.model as module_arch
-from ocr.trainer import Trainer
-from ocr.utils import setup_logger
+import Ameme.data_loader.augmentation as module_aug
+import Ameme.data_loader.data_loaders as module_data
+import Ameme.model.loss as module_loss
+import Ameme.model.metric as module_metric
+import Ameme.model.model as module_arch
+from Ameme.trainer import Trainer
+from Ameme.utils import setup_logger
+import yaml
 
 log = setup_logger(__name__)
 
@@ -152,3 +153,9 @@ def seed_everything(seed: int) -> None:
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
+
+
+if __name__ == "__main__":
+    with open("D:/Ameme/experiments/config.yml") as fh:
+        config = yaml.safe_load(fh)
+    train(config, None)

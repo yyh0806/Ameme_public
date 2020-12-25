@@ -1,8 +1,8 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
-from ocr.base import ModelBase
-from ocr.utils import setup_logger
+from Ameme.base import ModelBase
+from Ameme.utils import setup_logger
 
 
 log = setup_logger(__name__)

@@ -1,4 +1,4 @@
-name: {{cookiecutter.package_name}}
+name: Ameme
 
 channels:
   - pytorch

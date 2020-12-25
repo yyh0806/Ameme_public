@@ -6,7 +6,7 @@ from pathlib import Path
 from .saving import log_path
 
 
-LOG_LEVEL = logging.INFO
+LOG_LEVEL = logging.DEBUG
 
 
 def setup_logging(run_config, log_config="logging.yml") -> None:
@@ -42,6 +42,6 @@ def setup_logging(run_config, log_config="logging.yml") -> None:
 
 
 def setup_logger(name):
-    log = logging.getLogger(f'{{ cookiecutter.package_name }}.{name}')
+    log = logging.getLogger(f'Ameme.{name}')
     log.setLevel(LOG_LEVEL)
     return log

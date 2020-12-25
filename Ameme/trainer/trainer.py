@@ -2,8 +2,8 @@ import numpy as np
 import torch
 from torchvision.utils import make_grid
 
-from ocr.base import TrainerBase, AverageMeter
-from ocr.utils import setup_logger
+from Ameme.base import TrainerBase, AverageMeter
+from Ameme.utils import setup_logger
 
 
 log = setup_logger(__name__)
@@ -48,28 +48,11 @@ class Trainer(TrainerBase):
 
             loss_mtr.update(loss.item(), data.size(0))
 
-            if batch_idx % self.log_step == 0:
-                self.writer.set_step((epoch) * len(self.data_loader) + batch_idx)
-                self.writer.add_scalar('batch/loss', loss.item())
-                for mtr, value in zip(metric_mtrs, self._eval_metrics(output, target)):
-                    mtr.update(value, data.size(0))
-                    self.writer.add_scalar(f'batch/{mtr.name}', value)
-                self._log_batch(
-                    epoch, batch_idx, self.data_loader.batch_size,
-                    len(self.data_loader), loss.item()
-                )
-
-            if batch_idx == 0:
-                self.writer.add_image('data', make_grid(data.cpu(), nrow=8, normalize=True))
 
         del data
         del target
         del output
         torch.cuda.empty_cache()
-
-        self.writer.add_scalar('epoch/loss', loss_mtr.avg)
-        for mtr in metric_mtrs:
-            self.writer.add_scalar(f'epoch/{mtr.name}', mtr.avg)
 
         results = {
             'loss': loss_mtr.avg,
@@ -118,18 +101,11 @@ class Trainer(TrainerBase):
                 loss_mtr.update(loss.item(), data.size(0))
                 for mtr, value in zip(metric_mtrs, self._eval_metrics(output, target)):
                     mtr.update(value, data.size(0))
-                if batch_idx == 0:
-                    self.writer.add_image('input', make_grid(data.cpu(), nrow=8, normalize=True))
 
         del data
         del target
         del output
         torch.cuda.empty_cache()
-
-        self.writer.set_step(epoch, 'valid')
-        self.writer.add_scalar('loss', loss_mtr.avg)
-        for mtr in metric_mtrs:
-            self.writer.add_scalar(mtr.name, mtr.avg)
 
         return {
             'val_loss': loss_mtr.avg,
