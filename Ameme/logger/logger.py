@@ -2,14 +2,10 @@ import yaml
 import logging
 import logging.config
 from pathlib import Path
-
-from .saving import log_path
-
-
-LOG_LEVEL = logging.DEBUG
+from Ameme.utils import log_path
 
 
-def setup_logging(run_config, log_config="logging.yml") -> None:
+def setup_logging(run_config, log_config="E:/Ameme/logger/logger_config.yml", LOG_LEVEL=logging.INFO) -> None:
     """
     Setup ``logging.config``
 
@@ -20,6 +16,9 @@ def setup_logging(run_config, log_config="logging.yml") -> None:
 
     log_config : str
         Path to configuration file for logging
+        :param run_config:
+        :param log_config:
+        :param LOG_LEVEL:
     """
     log_config = Path(log_config)
 
@@ -39,9 +38,3 @@ def setup_logging(run_config, log_config="logging.yml") -> None:
             handler["filename"] = str(run_path / handler["filename"])
 
     logging.config.dictConfig(config)
-
-
-def setup_logger(name):
-    log = logging.getLogger(f'Ameme.{name}')
-    log.setLevel(LOG_LEVEL)
-    return log

@@ -2,10 +2,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from Ameme.base import ModelBase
-from Ameme.utils import setup_logger
-
-
-log = setup_logger(__name__)
+from Ameme.logger.logger import setup_logging
+import torchvision
+from efficientnet_pytorch import EfficientNet
 
 
 class MnistModel(ModelBase):
@@ -17,8 +16,6 @@ class MnistModel(ModelBase):
         self.fc1 = nn.Linear(320, 50)
         self.fc2 = nn.Linear(50, num_classes)
 
-        log.info(f'<init>: \n{self}')
-
     def forward(self, x):
         x = F.relu(F.max_pool2d(self.conv1(x), 2))
         x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
@@ -27,3 +24,24 @@ class MnistModel(ModelBase):
         x = F.dropout(x, training=self.training)
         x = self.fc2(x)
         return F.log_softmax(x, dim=1)
+
+
+# class CassavaModel(ModelBase):
+#     def __init__(self, num_classes=5):
+#         super().__init__()
+#         self.model = torchvision.models.resnet152()
+#         self.model.fc = nn.Linear(2048, num_classes, bias=True)
+#
+#     def forward(self, x):
+#         x = self.model(x)
+#         return x
+
+
+class CassavaModel(ModelBase):
+    def __init__(self, num_classes=5):
+        super().__init__()
+        self.model = EfficientNet.from_pretrained('efficientnet-b0', num_classes=num_classes)
+
+    def forward(self, x):
+        x = self.model(x)
+        return x

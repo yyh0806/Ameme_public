@@ -1,106 +1,107 @@
+from abc import abstractmethod
 from pathlib import Path
 import math
 
 import yaml
 import torch
 from tqdm import tqdm
-
-from Ameme.utils import (
-    setup_logger,
-    trainer_paths
-)
-
-
-log = setup_logger(__name__)
+from visdom import Visdom
 
 
 class TrainerBase:
     """
     Base class for all trainers
     """
-    def __init__(self, model, loss, metrics, optimizer, start_epoch, config, device):
+
+    def __init__(self, model, criterion, metrics, optimizer, config):
+        self.config = config
+        self.logger = config.get_logger('trainer', config['trainer']['verbosity'])
+
         self.model = model
-        self.loss = loss
+        self.criterion = criterion
         self.metrics = metrics
         self.optimizer = optimizer
-        self.start_epoch = start_epoch
-        self.config = config
-        self.device = device
 
-        self._setup_monitoring(config['training'])
+        # configuration to monitor model performance and save best
+        self._setup_monitoring(config['trainer'])
 
-        self.checkpoint_dir, writer_dir = trainer_paths(config)
+        self.start_epoch = 1
 
-        # Save configuration file into checkpoint directory:
-        config_save_path = Path(self.checkpoint_dir) / 'config.yml'
-        with open(config_save_path, 'w') as handle:
-            yaml.dump(config, handle, default_flow_style=False)
+        self.checkpoint_dir = config.save_dir
 
+        self.viz = Visdom()
+
+        if config.resume is not None:
+            self._resume_checkpoint(config.resume)
 
     def train(self):
         """
         Full training logic
         """
-        log.info('Starting training...')
-        for epoch in tqdm(range(self.start_epoch, self.epochs)):
+        self.logger.info('Starting training...')
+        for epoch in tqdm(range(self.start_epoch, self.epochs + 1)):
             result = self._train_epoch(epoch)
 
             # save logged informations into log dict
-            results = {'epoch': epoch}
-            for key, value in result.items():
+            log = {'epoch': epoch}
+            log.update(result)
+
+            for key, value in log.items():
                 if key == 'metrics':
-                    results.update({
+                    log.update({
                         mtr.__name__: value[i] for i, mtr in enumerate(self.metrics)})
                 elif key == 'val_metrics':
-                    results.update({
+                    log.update({
                         'val_' + mtr.__name__: value[i] for
                         i, mtr in enumerate(self.metrics)
                     })
                 else:
-                    results[key] = value
+                    log[key] = value
 
             # print logged informations to the screen
-            for key, value in results.items():
-                log.info(f'{str(key):15s}: {value}')
+            for key, value in log.items():
+                self.logger.info(f'{str(key):15s}: {value}')
 
             # evaluate model performance according to configured metric,
             # save best checkpoint as model_best
             best = False
+            not_improved_count = 0
             if self.mnt_mode != 'off':
                 try:
                     # check whether model performance improved or not, according
                     # to specified metric(mnt_metric)
-                    improved = (self.mnt_mode == 'min' and results[self.mnt_metric] < self.mnt_best) or\
-                               (self.mnt_mode == 'max' and results[self.mnt_metric] > self.mnt_best)
+                    improved = (self.mnt_mode == 'min' and log[self.mnt_metric] <= self.mnt_best) or \
+                               (self.mnt_mode == 'max' and log[self.mnt_metric] >= self.mnt_best)
                 except KeyError:
-                    log.warning(f"Warning: Metric '{self.mnt_metric}' is not found. Model "
+                    self.logger.warning(f"Warning: Metric '{self.mnt_metric}' is not found. Model "
                                         "performance monitoring is disabled.")
                     self.mnt_mode = 'off'
                     improved = False
                     not_improved_count = 0
 
                 if improved:
-                    self.mnt_best = results[self.mnt_metric]
+                    self.mnt_best = log[self.mnt_metric]
                     not_improved_count = 0
                     best = True
                 else:
                     not_improved_count += 1
 
                 if not_improved_count > self.early_stop:
-                    log.info(f"Validation performance didn\'t improve for {self.early_stop} "
+                    self.logger.info(f"Validation performance didn\'t improve for {self.early_stop} "
                                      "epochs. Training stops.")
                     break
 
             if epoch % self.save_period == 0:
                 self._save_checkpoint(epoch, save_best=best)
 
+    @abstractmethod
     def _train_epoch(self, epoch: int) -> dict:
         """
         Training logic for an epoch.
         """
         raise NotImplementedError
 
-    def _save_checkpoint(self, epoch: int, save_best: bool=False) -> None:
+    def _save_checkpoint(self, epoch: int, save_best: bool = False) -> None:
         """
         Saving checkpoints
 
@@ -119,11 +120,11 @@ class TrainerBase:
         }
         filename = self.checkpoint_dir / f'checkpoint-epoch{epoch}.pth'
         torch.save(state, filename)
-        log.info(f"Saving checkpoint: {filename} ...")
+        self.logger.info(f"Saving checkpoint: {filename} ...")
         if save_best:
             best_path = self.checkpoint_dir / 'model_best.pth'
             torch.save(state, best_path)
-            log.info(f'Saving current best: {best_path}')
+            self.logger.info(f'Saving current best: {best_path}')
 
     def _setup_monitoring(self, config: dict) -> None:
         """
@@ -141,24 +142,29 @@ class TrainerBase:
             self.mnt_best = math.inf if self.mnt_mode == 'min' else -math.inf
             self.early_stop = config.get('early_stop', math.inf)
 
+    def _resume_checkpoint(self, resume_path):
+        """
+        Resume from saved checkpoints
 
-class AverageMeter:
-    """
-    Computes and stores the average and current value.
-    """
+        :param resume_path: Checkpoint path to be resumed
+        """
+        resume_path = str(resume_path)
+        self.logger.info("Loading checkpoint: {} ...".format(resume_path))
+        checkpoint = torch.load(resume_path)
+        self.start_epoch = checkpoint['epoch'] + 1
+        self.mnt_best = checkpoint['monitor_best']
 
-    def __init__(self, name):
-        self.name = name
-        self.reset()
+        # load architecture params from checkpoint.
+        if checkpoint['config']['arch'] != self.config['arch']:
+            self.logger.warning("Warning: Architecture configuration given in config file is different from that of "
+                                "checkpoint. This may yield an exception while state_dict is being loaded.")
+        self.model.load_state_dict(checkpoint['state_dict'])
 
-    def reset(self):
-        self.val = 0
-        self.avg = 0
-        self.sum = 0
-        self.count = 0
+        # load optimizer state from checkpoint only when optimizer type is not changed.
+        if checkpoint['config']['optimizer']['type'] != self.config['optimizer']['type']:
+            self.logger.warning("Warning: Optimizer type given in config file is different from that of checkpoint. "
+                                "Optimizer parameters not being resumed.")
+        else:
+            self.optimizer.load_state_dict(checkpoint['optimizer'])
 
-    def update(self, val, n=1):
-        self.val = val
-        self.sum += val * n
-        self.count += n
-        self.avg = self.sum / self.count
+        self.logger.info("Checkpoint loaded. Resume training from epoch {}".format(self.start_epoch))

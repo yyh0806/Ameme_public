@@ -1,5 +1,6 @@
 import torch.nn as nn
 import numpy as np
+from abc import abstractmethod
 
 
 class ModelBase(nn.Module):
@@ -7,10 +8,8 @@ class ModelBase(nn.Module):
     Base class for all models
     """
 
-    def __init__(self):
-        super().__init__()
-
-    def forward(self, *input):
+    @abstractmethod
+    def forward(self, *inputs):
         """
         Forward pass logic
 

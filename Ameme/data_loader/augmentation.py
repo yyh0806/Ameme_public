@@ -26,3 +26,27 @@ class MNISTTransforms(AugmentationFactoryBase):
 
     def build_test(self):
         return T.Compose([T.ToTensor(), T.Normalize(self.MEANS, self.STDS)])
+
+
+class CassavaTransforms(AugmentationFactoryBase):
+
+    MEANS = (0.485, 0.456, 0.406)
+    STDS = (0.229, 0.224, 0.225)
+
+    def build_train(self):
+        return T.Compose(
+            [
+             T.Resize((256, 256)),
+             T.RandomRotation(90),
+             T.RandomHorizontalFlip(p=0.5),
+             T.ToTensor(),
+             T.Normalize(self.MEANS, self.STDS)])
+
+    def build_test(self):
+        return T.Compose(
+            [
+             T.Resize((256, 256)),
+             T.RandomRotation(90),
+             T.RandomHorizontalFlip(p=0.5),
+             T.ToTensor(),
+             T.Normalize(self.MEANS, self.STDS)])
