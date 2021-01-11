@@ -1,0 +1,49 @@
+name: Cassava
+save_dir: saved/
+seed: 1234
+n_gpu: 1
+target_devices: [0]
+
+arch:
+  type: CassavaModel
+  args: {}
+
+augmentation:
+  type: CassavaTransforms
+  args: {}
+
+data_loader:
+  type: CassavaDataLoader
+  args:
+    data_dir: E:/Ameme/Ameme/data/cassava-leaf-disease-classification/train_images/
+    batch_size: 16
+    shuffle: true
+    validation_split: 0.2
+    num_workers: 0
+
+
+loss: CrossEntropyLoss
+
+lr_scheduler:
+  type: StepLR
+  args:
+    gamma: 0.1
+    step_size: 50
+
+metrics:
+- top_1_acc
+- top_3_acc
+
+optimizer:
+  type: Adam
+  args:
+    lr: 0.001
+    weight_decay: 0
+
+trainer:
+  early_stop: 10
+  epochs: 100
+  monitor: min val_loss
+  save_period: 10
+  verbosity: 2
+
