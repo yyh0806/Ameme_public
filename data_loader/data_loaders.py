@@ -3,11 +3,11 @@ from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
 from torchvision import datasets
 
-from Ameme.base import DataLoaderBase
+from base import DataLoaderBase
 from PIL import Image
 import os
-from Ameme.data_loader.datasets import CassavaDataset
-from Ameme.data_loader.augmentation import CassavaTransforms
+from data_loader.datasets import CassavaDataset
+from data_loader.augmentation import CassavaTransforms
 import numpy as np
 import pandas as pd
 

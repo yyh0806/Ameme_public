@@ -10,14 +10,14 @@ import torch.nn as nn
 import torch.optim as module_optimizer
 import torch.optim.lr_scheduler as module_scheduler
 
-import Ameme.data_loader.data_loaders as module_data
-import Ameme.model.loss as module_loss
-import Ameme.model.metric as module_metric
-import Ameme.model.model as module_arch
-from Ameme.trainer import Trainer
-from Ameme.logger.logger import setup_logging
-from Ameme.utils import prepare_device, seed_everything
-from Ameme.utils.parse_config import ConfigParser
+import data_loader.data_loaders as module_data
+import model.loss as module_loss
+import model.metric as module_metric
+import model.model as module_arch
+from trainer import Trainer
+from logger.logger import setup_logging
+from utils import prepare_device, seed_everything
+from utils.parse_config import ConfigParser
 import yaml
 
 

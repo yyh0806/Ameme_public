@@ -1,9 +1,9 @@
 import numpy as np
 import torch
 from torchvision.utils import make_grid
-from Ameme.utils import inf_loop, MetricTracker
-from Ameme.base import TrainerBase
-from Ameme.logger.logger import setup_logging
+from utils import inf_loop, MetricTracker
+from base import TrainerBase
+from logger.logger import setup_logging
 
 
 class Trainer(TrainerBase):

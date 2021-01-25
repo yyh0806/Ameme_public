@@ -2,7 +2,7 @@ import yaml
 import logging
 import logging.config
 from pathlib import Path
-from Ameme.utils import log_path
+from utils import log_path
 
 
 def setup_logging(run_config, log_config="E:/Ameme/logger/logger_config.yml", LOG_LEVEL=logging.INFO) -> None:

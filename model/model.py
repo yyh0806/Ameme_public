@@ -1,8 +1,8 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
-from Ameme.base import ModelBase
-from Ameme.logger.logger import setup_logging
+from base import ModelBase
+from logger.logger import setup_logging
 import torchvision
 from efficientnet_pytorch import EfficientNet
 
