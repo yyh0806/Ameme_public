@@ -4,6 +4,7 @@ from torchvision.utils import make_grid
 from utils import inf_loop, MetricTracker
 from base import TrainerBase
 from logger.logger import setup_logging
+from visdom import Visdom
 
 
 class Trainer(TrainerBase):
@@ -43,6 +44,8 @@ class Trainer(TrainerBase):
         self.train_metrics.reset()
         for batch_idx, (data, target) in enumerate(self.data_loader):
             data, target = data.to(self.device), target.to(self.device)
+            if self.config['trainer']['visdom']:
+                self.viz.images(data, nrow=6, win=1, opts={'title': 'data'})
 
             self.optimizer.zero_grad()
             output = self.model(data)
@@ -51,7 +54,7 @@ class Trainer(TrainerBase):
             self.optimizer.step()
 
             self.train_metrics.update('loss', loss.item())
-            for met in self.metrics:
+            for i, met in enumerate(self.metrics):
                 self.train_metrics.update(met.__name__, met(output, target))
 
             if batch_idx % self.log_step == 0:
@@ -59,7 +62,10 @@ class Trainer(TrainerBase):
                     epoch,
                     self._progress(batch_idx),
                     loss.item()))
-
+                self.viz.text('Train Epoch: {} {} Loss: {:.6f}'.format(
+                    epoch,
+                    self._progress(batch_idx),
+                    loss.item()), win=2)
             if batch_idx == self.len_epoch:
                 break
         log = self.train_metrics.result()
@@ -70,6 +76,7 @@ class Trainer(TrainerBase):
 
         if self.lr_scheduler is not None:
             self.lr_scheduler.step()
+        self.viz.text(str(log), win=3)
         return log
 
     def _valid_epoch(self, epoch: int) -> dict:

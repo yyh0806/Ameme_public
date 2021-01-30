@@ -19,7 +19,7 @@ from logger.logger import setup_logging
 from utils import prepare_device, seed_everything
 from utils.parse_config import ConfigParser
 import yaml
-
+from efficientnet_pytorch import EfficientNet
 
 def train(cfg) -> None:
     logger = cfg.get_logger('train')
@@ -60,7 +60,7 @@ def train(cfg) -> None:
 
 if __name__ == "__main__":
     args = argparse.ArgumentParser(description='PyTorch Template')
-    args.add_argument('-c', '--config', default="../experiments/cassava_config.yml", type=str,
+    args.add_argument('-c', '--config', default="experiments/cassava_config.yml", type=str,
                       help='config file path (default: None)')
     args.add_argument('-r', '--resume', default=None, type=str,
                       help='path to latest checkpoint (default: None)')
@@ -75,3 +75,15 @@ if __name__ == "__main__":
     ]
     config = ConfigParser.from_args(args, options)
     train(config)
+    # model = EfficientNet.from_pretrained('efficientnet-b0', num_classes=5).cuda()
+    # state_dict = torch.load("E:/Ameme/saved/models/Cassava/0127_211800/checkpoint-epoch30.pth")["state_dict"] # 模型可以保存为pth文件，也可以为pt文件。
+    # # create new OrderedDict that does not contain `module.`
+    # test = torch.load("E:/Ameme/saved/models/Cassava/0127_211800/checkpoint-epoch30.pth")
+    # from collections import OrderedDict
+    #
+    # new_state_dict = OrderedDict()
+    # for k, v in state_dict.items():
+    #     name = k[6:]  # remove `module.`，表面从第7个key值字符取到最后一个字符，正好去掉了module.
+    #     new_state_dict[name] = v  # 新字典的key值对应的value为一一对应的值。
+    # # load params
+    # model.load_state_dict(new_state_dict)

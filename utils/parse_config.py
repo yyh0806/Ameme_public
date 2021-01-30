@@ -4,8 +4,8 @@ from pathlib import Path
 from functools import reduce, partial
 from operator import getitem
 from datetime import datetime
-from Ameme.utils import read_config, write_config
-from Ameme.logger import setup_logging
+from utils import read_config, write_config
+from logger import setup_logging
 
 
 class ConfigParser:
@@ -61,7 +61,7 @@ class ConfigParser:
             os.environ["CUDA_VISIBLE_DEVICES"] = args.device
         if args.resume is not None:
             resume = Path(args.resume)
-            cfg_fname = resume.parent / 'config.json'
+            cfg_fname = resume.parent / 'config.yml'
         else:
             msg_no_cfg = "Configuration file need to be specified. Add '-c config.json', for example."
             assert args.config is not None, msg_no_cfg

@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from pathlib import Path
 import math
-
+from subprocess import Popen, PIPE
 import yaml
 import torch
 from tqdm import tqdm
@@ -28,9 +28,10 @@ class TrainerBase:
         self.start_epoch = 1
 
         self.checkpoint_dir = config.save_dir
-
-        self.viz = Visdom()
-
+        if config['trainer']['visdom']:
+            self.viz = Visdom()
+            Popen("visdom", shell=True, stdout=PIPE, stderr=PIPE)
+            self.viz.line([0.], [0], win='train_loss', opts=dict(title='train_loss'))
         if config.resume is not None:
             self._resume_checkpoint(config.resume)
 
@@ -50,6 +51,8 @@ class TrainerBase:
                 if key == 'metrics':
                     log.update({
                         mtr.__name__: value[i] for i, mtr in enumerate(self.metrics)})
+                    for i, mtr in enumerate(self.metrics):
+                        self.viz.line([value[i]], [epoch], win=mtr[i], update='append')
                 elif key == 'val_metrics':
                     log.update({
                         'val_' + mtr.__name__: value[i] for
@@ -116,7 +119,7 @@ class TrainerBase:
             'state_dict': self.model.state_dict(),
             'optimizer': self.optimizer.state_dict(),
             'monitor_best': self.mnt_best,
-            'config': self.config
+            # 'config': self.config
         }
         filename = self.checkpoint_dir / f'checkpoint-epoch{epoch}.pth'
         torch.save(state, filename)

@@ -40,7 +40,7 @@ class MnistModel(ModelBase):
 class CassavaModel(ModelBase):
     def __init__(self, num_classes=5):
         super().__init__()
-        self.model = EfficientNet.from_pretrained('efficientnet-b0', num_classes=num_classes)
+        self.model = EfficientNet.from_pretrained('efficientnet-b3', num_classes=num_classes)
 
     def forward(self, x):
         x = self.model(x)

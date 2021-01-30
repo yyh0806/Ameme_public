@@ -41,17 +41,16 @@ def ensure_exists(p: Path) -> Path:
     return p
 
 
-def arch_path(config: dict) -> Path:
+def arch_path(string: str) -> Path:
     """
     Construct a path based on the name of a configuration file eg. 'saved/EfficientNet'
     """
-    p = Path(config["save_dir"]) / config["name"]
-    return ensure_exists(p)
+    return ensure_exists(string)
 
 
-def log_path(config: dict) -> Path:
-    p = arch_path(config) / LOG_DIR
-    return ensure_exists(p)
+def log_path(string: str) -> Path:
+
+    return ensure_exists(string)
 
 
 def inf_loop(data_loader):
@@ -89,8 +88,6 @@ class MetricTracker:
             self._data[col].values[:] = 0
 
     def update(self, key, value, n=1):
-        if self.writer is not None:
-            self.writer.scatter(key, value)
         self._data.total[key] += value * n
         self._data.counts[key] += n
         self._data.average[key] = self._data.total[key] / self._data.counts[key]

@@ -50,19 +50,13 @@ class MnistDataLoader(DataLoaderBase):
 class CassavaDataLoader(DataLoaderBase):
 
     def __init__(self, data_dir, batch_size, shuffle=True, validation_split=0.0, num_workers=0):
-        train = pd.read_csv('E:/Ameme/Ameme/data/cassava-leaf-disease-classification/train.csv')
+        train = pd.read_csv('E:/Ameme/data/cassava-leaf-disease-classification/train.csv')
         X_Train, Y_Train = train['image_id'].values, train['label'].values
         transforms = CassavaTransforms()
         self.train_dataset = CassavaDataset(data_dir, X_Train, Y_Train, transforms)
-        self.valid_dataset = None
         self.init_kwargs = {
             'batch_size': batch_size,
             'num_workers': num_workers
         }
         super().__init__(self.train_dataset, batch_size, shuffle, validation_split, num_workers)
 
-    def split_validation(self):
-        if self.valid_dataset is None:
-            return None
-        else:
-            return DataLoader(self.valid_dataset, **self.init_kwargs)
