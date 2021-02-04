@@ -37,11 +37,17 @@ class MnistModel(ModelBase):
 #         return x
 
 
-class CassavaModel(ModelBase):
+class EfficientB4Model(ModelBase):
     def __init__(self, num_classes=5):
         super().__init__()
-        self.model = EfficientNet.from_pretrained('efficientnet-b3', num_classes=num_classes)
+        self.model = EfficientNet.from_pretrained('efficientnet-b4', num_classes=num_classes)
 
     def forward(self, x):
         x = self.model(x)
         return x
+
+
+class Resnet50(ModelBase):
+    def __init__(self, num_classes=5, pretrained=True):
+        super().__init__()
+        self.model = torchvision.models.resnet50()

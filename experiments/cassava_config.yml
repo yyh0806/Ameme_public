@@ -6,7 +6,9 @@ target_devices: [0]
 
 arch:
   type: CassavaModel
-  args: {}
+  args:
+    num_class: 5
+    pretrained: true
 
 augmentation:
   type: CassavaTransforms
@@ -16,19 +18,23 @@ data_loader:
   type: CassavaDataLoader
   args:
     data_dir: E:/Ameme/data/cassava-leaf-disease-classification/train_images/
-    batch_size: 8
+    batch_size: 4
     shuffle: true
     validation_split: 0.2
     num_workers: 0
 
 
 loss: CrossEntropyLoss
+#loss: FocalCosineLoss
 
 lr_scheduler:
-  type: StepLR
+  type: ReduceLROnPlateau
   args:
-    gamma: 0.1
-    step_size: 50
+    factor: 0.2
+    mode: min
+    patience: 10
+
+    verbose: true
 
 metrics:
 - top_1_acc
@@ -37,8 +43,8 @@ metrics:
 optimizer:
   type: Adam
   args:
-    lr: 0.001
-    weight_decay: 10
+    lr: 0.0001
+    weight_decay: 0
 
 trainer:
   early_stop: 10
@@ -46,5 +52,5 @@ trainer:
   monitor: min val_loss
   save_period: 1
   verbosity: 2
-  visdom: 1
+  visdom: 0
 

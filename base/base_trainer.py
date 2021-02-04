@@ -31,7 +31,6 @@ class TrainerBase:
         if config['trainer']['visdom']:
             self.viz = Visdom()
             Popen("visdom", shell=True, stdout=PIPE, stderr=PIPE)
-            self.viz.line([0.], [0], win='train_loss', opts=dict(title='train_loss'))
         if config.resume is not None:
             self._resume_checkpoint(config.resume)
 
@@ -51,8 +50,6 @@ class TrainerBase:
                 if key == 'metrics':
                     log.update({
                         mtr.__name__: value[i] for i, mtr in enumerate(self.metrics)})
-                    for i, mtr in enumerate(self.metrics):
-                        self.viz.line([value[i]], [epoch], win=mtr[i], update='append')
                 elif key == 'val_metrics':
                     log.update({
                         'val_' + mtr.__name__: value[i] for
@@ -158,16 +155,16 @@ class TrainerBase:
         self.mnt_best = checkpoint['monitor_best']
 
         # load architecture params from checkpoint.
-        if checkpoint['config']['arch'] != self.config['arch']:
-            self.logger.warning("Warning: Architecture configuration given in config file is different from that of "
-                                "checkpoint. This may yield an exception while state_dict is being loaded.")
+        # if checkpoint['config']['arch'] != self.config['arch']:
+        #     self.logger.warning("Warning: Architecture configuration given in config file is different from that of "
+        #                         "checkpoint. This may yield an exception while state_dict is being loaded.")
         self.model.load_state_dict(checkpoint['state_dict'])
 
         # load optimizer state from checkpoint only when optimizer type is not changed.
-        if checkpoint['config']['optimizer']['type'] != self.config['optimizer']['type']:
-            self.logger.warning("Warning: Optimizer type given in config file is different from that of checkpoint. "
-                                "Optimizer parameters not being resumed.")
-        else:
-            self.optimizer.load_state_dict(checkpoint['optimizer'])
-
+        # if checkpoint['config']['optimizer']['type'] != self.config['optimizer']['type']:
+        #     self.logger.warning("Warning: Optimizer type given in config file is different from that of checkpoint. "
+        #                         "Optimizer parameters not being resumed.")
+        # else:
+        #     self.optimizer.load_state_dict(checkpoint['optimizer'])
+        self.optimizer.load_state_dict(checkpoint['optimizer'])
         self.logger.info("Checkpoint loaded. Resume training from epoch {}".format(self.start_epoch))

@@ -62,10 +62,11 @@ class Trainer(TrainerBase):
                     epoch,
                     self._progress(batch_idx),
                     loss.item()))
-                self.viz.text('Train Epoch: {} {} Loss: {:.6f}'.format(
-                    epoch,
-                    self._progress(batch_idx),
-                    loss.item()), win=2)
+                if self.config['trainer']['visdom']:
+                    self.viz.text('Train Epoch: {} {} Loss: {:.6f}'.format(
+                        epoch,
+                        self._progress(batch_idx),
+                        loss.item()), win=2)
             if batch_idx == self.len_epoch:
                 break
         log = self.train_metrics.result()
@@ -75,8 +76,12 @@ class Trainer(TrainerBase):
             log.update(**{'val_' + k: v for k, v in val_log.items()})
 
         if self.lr_scheduler is not None:
-            self.lr_scheduler.step()
-        self.viz.text(str(log), win=3)
+            if type(self.lr_scheduler) == torch.optim.lr_scheduler.ReduceLROnPlateau:
+                self.lr_scheduler.step(log["val_loss"])
+            else:
+                self.lr_scheduler.step()
+        if self.config['trainer']['visdom']:
+            self.viz.text(str(log), win=3)
         return log
 
     def _valid_epoch(self, epoch: int) -> dict:
