@@ -1,7 +1,8 @@
 import numpy as np
+import torch
 from torch.utils.data import DataLoader
 from torch.utils.data.dataloader import default_collate
-from torch.utils.data.sampler import SubsetRandomSampler
+from torch.utils.data.sampler import SubsetRandomSampler, WeightedRandomSampler
 
 
 class DataLoaderBase(DataLoader):
@@ -48,7 +49,6 @@ class DataLoaderBase(DataLoader):
 
         train_sampler = SubsetRandomSampler(train_idx)
         valid_sampler = SubsetRandomSampler(valid_idx)
-
         self.shuffle = False
         self.n_samples = len(train_idx)
 

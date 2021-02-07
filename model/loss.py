@@ -1,5 +1,6 @@
 import torch.nn.functional as F
 import torch.nn as nn
+import numpy as np
 import torch
 
 
@@ -23,3 +24,4 @@ def FocalCosineLoss(output, target):
         focal_loss = torch.mean(focal_loss)
 
     return cosine_loss + 0.1 * focal_loss
+

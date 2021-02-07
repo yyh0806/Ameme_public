@@ -47,7 +47,22 @@ class EfficientB4Model(ModelBase):
         return x
 
 
-class Resnet50(ModelBase):
-    def __init__(self, num_classes=5, pretrained=True):
+class EfficientB6Model(ModelBase):
+    def __init__(self, num_classes=5):
         super().__init__()
-        self.model = torchvision.models.resnet50()
+        self.model = EfficientNet.from_pretrained('efficientnet-b6', num_classes=num_classes)
+
+    def forward(self, x):
+        x = self.model(x)
+        return x
+
+
+class Resnext50_32x4d(ModelBase):
+    def __init__(self, num_classes=5):
+        super().__init__()
+        self.model = torchvision.models.resnext50_32x4d(num_classes=num_classes, pretrained=False)
+        self.model.fc = nn.Linear(2048, num_classes)
+
+    def forward(self, x):
+        x = self.model(x)
+        return x

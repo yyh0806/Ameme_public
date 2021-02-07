@@ -1,14 +1,13 @@
 name: Cassava
 save_dir: saved/
-seed: 1234
+seed: 8060
 n_gpu: 1
 target_devices: [0]
 
 arch:
-  type: CassavaModel
+  type: EfficientB4Model
   args:
-    num_class: 5
-    pretrained: true
+    num_classes: 5
 
 augmentation:
   type: CassavaTransforms
@@ -20,20 +19,20 @@ data_loader:
     data_dir: E:/Ameme/data/cassava-leaf-disease-classification/train_images/
     batch_size: 4
     shuffle: true
-    validation_split: 0.2
+    validation_split: 0.1
     num_workers: 0
 
 
 loss: CrossEntropyLoss
 #loss: FocalCosineLoss
+#loss: BiTemperedLogisticLoss
 
 lr_scheduler:
   type: ReduceLROnPlateau
   args:
     factor: 0.2
     mode: min
-    patience: 10
-
+    patience: 3
     verbose: true
 
 metrics:
@@ -43,11 +42,11 @@ metrics:
 optimizer:
   type: Adam
   args:
-    lr: 0.0001
+    lr: 0.00001
     weight_decay: 0
 
 trainer:
-  early_stop: 10
+  early_stop: 30
   epochs: 100
   monitor: min val_loss
   save_period: 1
