@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from torchvision.utils import make_grid
-from utils import inf_loop, MetricTracker
+from utils import inf_loop, MetricTracker, mixup_data, mixup_criterion
 from base import TrainerBase
 from logger.logger import setup_logging
 from visdom import Visdom
@@ -49,7 +49,11 @@ class Trainer(TrainerBase):
 
             self.optimizer.zero_grad()
             output = self.model(data)
-            loss = self.criterion(output, target)
+            if self.config['mixup']['use']:
+                data, targets_a, targets_b, lam = mixup_data(data, target, self.config['mixup']['alpha'])
+                loss = mixup_criterion(self.criterion, output, targets_a, targets_b, lam)
+            else:
+                loss = self.criterion(output, target)
             loss.backward()
             self.optimizer.step()
 

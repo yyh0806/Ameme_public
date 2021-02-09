@@ -4,6 +4,10 @@ seed: 8060
 n_gpu: 1
 target_devices: [0]
 
+mixup:
+  use: true
+  alpha: 1
+
 arch:
   type: EfficientB4Model
   args:
@@ -24,8 +28,6 @@ data_loader:
 
 
 loss: CrossEntropyLoss
-#loss: FocalCosineLoss
-#loss: BiTemperedLogisticLoss
 
 lr_scheduler:
   type: ReduceLROnPlateau
@@ -34,15 +36,16 @@ lr_scheduler:
     mode: min
     patience: 3
     verbose: true
+    min_lr: 0.00001
 
 metrics:
 - top_1_acc
 - top_3_acc
 
 optimizer:
-  type: Adam
+  type: AdamW
   args:
-    lr: 0.00001
+    lr: 0.0001
     weight_decay: 0
 
 trainer:

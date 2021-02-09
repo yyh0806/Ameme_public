@@ -24,4 +24,3 @@ def FocalCosineLoss(output, target):
         focal_loss = torch.mean(focal_loss)
 
     return cosine_loss + 0.1 * focal_loss
-
