@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from torchvision.utils import make_grid
-from utils import inf_loop, MetricTracker, mixup_data, mixup_criterion
+from utils import inf_loop, MetricTracker, mixup_data, mixup_criterion, VisdomLinePlotter
 from base import TrainerBase
 from logger.logger import setup_logging
 from visdom import Visdom
@@ -28,6 +28,8 @@ class Trainer(TrainerBase):
         self.lr_scheduler = lr_scheduler
         self.log_step = int(np.sqrt(data_loader.batch_size))
 
+        self.plotter = VisdomLinePlotter(self.viz)
+
         self.train_metrics = MetricTracker('loss', *[m.__name__ for m in self.metrics], writer=None)
         self.valid_metrics = MetricTracker('loss', *[m.__name__ for m in self.metrics], writer=None)
 
@@ -51,6 +53,8 @@ class Trainer(TrainerBase):
             output = self.model(data)
             if self.config['mixup']['use']:
                 data, targets_a, targets_b, lam = mixup_data(data, target, self.config['mixup']['alpha'])
+                if self.config['trainer']['visdom']:
+                    self.viz.images(data, nrow=6, win=11, opts={'title': 'mixup'})
                 loss = mixup_criterion(self.criterion, output, targets_a, targets_b, lam)
             else:
                 loss = self.criterion(output, target)
@@ -66,11 +70,6 @@ class Trainer(TrainerBase):
                     epoch,
                     self._progress(batch_idx),
                     loss.item()))
-                if self.config['trainer']['visdom']:
-                    self.viz.text('Train Epoch: {} {} Loss: {:.6f}'.format(
-                        epoch,
-                        self._progress(batch_idx),
-                        loss.item()), win=2)
             if batch_idx == self.len_epoch:
                 break
         log = self.train_metrics.result()
@@ -78,7 +77,9 @@ class Trainer(TrainerBase):
         if self.do_validation:
             val_log = self._valid_epoch(epoch)
             log.update(**{'val_' + k: v for k, v in val_log.items()})
-
+            if self.config['trainer']['visdom']:
+                self.plotter.plot('loss', 'train', 'train_loss', epoch, log["loss"])
+                self.plotter.plot('loss', 'val', 'val_loss', epoch, log["val_loss"])
         if self.lr_scheduler is not None:
             if type(self.lr_scheduler) == torch.optim.lr_scheduler.ReduceLROnPlateau:
                 self.lr_scheduler.step(log["val_loss"])

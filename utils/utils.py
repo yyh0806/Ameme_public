@@ -8,6 +8,7 @@ import numpy as np
 import os
 import random
 import yaml
+import visdom
 
 LOG_DIR = "logs"
 CHECKPOINT_DIR = "checkpoints"
