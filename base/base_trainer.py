@@ -39,7 +39,7 @@ class TrainerBase:
         Full training logic
         """
         self.logger.info('Starting training...')
-        for epoch in tqdm(range(self.start_epoch, self.epochs + 1)):
+        for epoch in range(self.start_epoch, self.epochs + 1):
             result = self._train_epoch(epoch)
 
             # save logged informations into log dict

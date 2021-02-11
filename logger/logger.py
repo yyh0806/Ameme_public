@@ -5,7 +5,7 @@ from pathlib import Path
 from utils import log_path
 
 
-def setup_logging(run_config, log_config="C:/Ameme/logger/logger_config.yml", LOG_LEVEL=logging.INFO) -> None:
+def setup_logging(run_config, log_config="logger/logger_config.yml", LOG_LEVEL=logging.INFO) -> None:
     """
     Setup ``logging.config``
 

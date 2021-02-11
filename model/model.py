@@ -37,6 +37,15 @@ class MnistModel(ModelBase):
 #         return x
 
 
+class EfficientB0Model(ModelBase):
+    def __init__(self, num_classes=5):
+        super().__init__()
+        self.model = EfficientNet.from_pretrained('efficientnet-b0', num_classes=num_classes)
+
+    def forward(self, x):
+        x = self.model(x)
+        return x
+
 class EfficientB4Model(ModelBase):
     def __init__(self, num_classes=5):
         super().__init__()

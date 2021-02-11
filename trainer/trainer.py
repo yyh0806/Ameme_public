@@ -5,7 +5,7 @@ from utils import inf_loop, MetricTracker, mixup_data, mixup_criterion, VisdomLi
 from base import TrainerBase
 from logger.logger import setup_logging
 from visdom import Visdom
-
+from tqdm import tqdm
 
 class Trainer(TrainerBase):
     """
@@ -27,8 +27,8 @@ class Trainer(TrainerBase):
         self.do_validation = self.valid_data_loader is not None
         self.lr_scheduler = lr_scheduler
         self.log_step = int(np.sqrt(data_loader.batch_size))
-
-        self.plotter = VisdomLinePlotter(self.viz)
+        if self.config['trainer']['visdom']:
+            self.plotter = VisdomLinePlotter(self.viz)
 
         self.train_metrics = MetricTracker('loss', *[m.__name__ for m in self.metrics], writer=None)
         self.valid_metrics = MetricTracker('loss', *[m.__name__ for m in self.metrics], writer=None)
@@ -44,7 +44,7 @@ class Trainer(TrainerBase):
         """
         self.model.train()
         self.train_metrics.reset()
-        for batch_idx, (data, target) in enumerate(self.data_loader):
+        for batch_idx, (data, target) in enumerate(tqdm(self.data_loader)):
             data, target = data.to(self.device), target.to(self.device)
             if self.config['trainer']['visdom']:
                 self.viz.images(data, nrow=6, win=1, opts={'title': 'data'})
