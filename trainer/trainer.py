@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from torchvision.utils import make_grid
-from utils import inf_loop, MetricTracker, mixup_data, mixup_criterion, VisdomLinePlotter
+from utils import inf_loop, MetricTracker, mixup_data, mix_criterion, VisdomLinePlotter, cutmix_data
 from base import TrainerBase
 from logger.logger import setup_logging
 from visdom import Visdom
@@ -55,11 +55,18 @@ class Trainer(TrainerBase):
 
                 self.optimizer.zero_grad()
                 output = self.model(data)
-                if self.config['mixup']['use']:
+                r_mixup = np.random.rand(1)
+                r_cutmix = np.random.rand(1)
+                if self.config['mixup']['use'] and r_mixup < self.config['mixup']['prob']:
                     data, targets_a, targets_b, lam = mixup_data(data, target, self.config['mixup']['alpha'])
                     if self.config['trainer']['visdom']:
-                        self.viz.images(data, nrow=6, win=11, opts={'title': 'mixup'})
-                    loss = mixup_criterion(self.criterion, output, targets_a, targets_b, lam)
+                        self.viz.images(data, nrow=8, win=11, opts={'title': 'mixup'})
+                    loss = mix_criterion(self.criterion, output, targets_a, targets_b, lam)
+                elif self.config['cutmix']['use'] and r_cutmix < self.config['cutmix']['prob']:
+                    data, targets_a, targets_b, lam = cutmix_data(data, target, self.config['cutmix']['alpha'])
+                    if self.config['trainer']['visdom']:
+                        self.viz.images(data, nrow=8, win=12, opts={'title': 'mixup'})
+                    loss = mix_criterion(self.criterion, output, targets_a, targets_b, lam)
                 else:
                     loss = self.criterion(output, target)
                 self.scaler.scale(loss).backward()
