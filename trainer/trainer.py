@@ -6,6 +6,8 @@ from base import TrainerBase
 from logger.logger import setup_logging
 from visdom import Visdom
 from tqdm import tqdm
+from torch.cuda.amp import autocast, GradScaler
+
 
 class Trainer(TrainerBase):
     """
@@ -13,8 +15,9 @@ class Trainer(TrainerBase):
     """
 
     def __init__(self, model, criterion, metrics, optimizer, config, device,
-                 data_loader, valid_data_loader=None, lr_scheduler=None, len_epoch=None):
+                 data_loader, valid_data_loader=None, lr_scheduler=None, len_epoch=None, scaler=GradScaler()):
         super().__init__(model, criterion, metrics, optimizer, config)
+        self.scaler = scaler
         self.config = config
         self.device = device
         self.data_loader = data_loader
@@ -45,33 +48,35 @@ class Trainer(TrainerBase):
         self.model.train()
         self.train_metrics.reset()
         for batch_idx, (data, target) in enumerate(tqdm(self.data_loader)):
-            data, target = data.to(self.device), target.to(self.device)
-            if self.config['trainer']['visdom']:
-                self.viz.images(data, nrow=6, win=1, opts={'title': 'data'})
-
-            self.optimizer.zero_grad()
-            output = self.model(data)
-            if self.config['mixup']['use']:
-                data, targets_a, targets_b, lam = mixup_data(data, target, self.config['mixup']['alpha'])
+            with autocast():
+                data, target = data.to(self.device), target.to(self.device)
                 if self.config['trainer']['visdom']:
-                    self.viz.images(data, nrow=6, win=11, opts={'title': 'mixup'})
-                loss = mixup_criterion(self.criterion, output, targets_a, targets_b, lam)
-            else:
-                loss = self.criterion(output, target)
-            loss.backward()
-            self.optimizer.step()
+                    self.viz.images(data, nrow=6, win=1, opts={'title': 'data'})
 
-            self.train_metrics.update('loss', loss.item())
-            for i, met in enumerate(self.metrics):
-                self.train_metrics.update(met.__name__, met(output, target))
+                self.optimizer.zero_grad()
+                output = self.model(data)
+                if self.config['mixup']['use']:
+                    data, targets_a, targets_b, lam = mixup_data(data, target, self.config['mixup']['alpha'])
+                    if self.config['trainer']['visdom']:
+                        self.viz.images(data, nrow=6, win=11, opts={'title': 'mixup'})
+                    loss = mixup_criterion(self.criterion, output, targets_a, targets_b, lam)
+                else:
+                    loss = self.criterion(output, target)
+                self.scaler.scale(loss).backward()
+                self.scaler.step(self.optimizer)
+                self.scaler.update()
+                self.optimizer.zero_grad()
+                self.train_metrics.update('loss', loss.item())
+                for i, met in enumerate(self.metrics):
+                    self.train_metrics.update(met.__name__, met(output, target))
 
-            if batch_idx % self.log_step == 0:
-                self.logger.debug('Train Epoch: {} {} Loss: {:.6f}'.format(
-                    epoch,
-                    self._progress(batch_idx),
-                    loss.item()))
-            if batch_idx == self.len_epoch:
-                break
+                if batch_idx % self.log_step == 0:
+                    self.logger.debug('Train Epoch: {} {} Loss: {:.6f}'.format(
+                        epoch,
+                        self._progress(batch_idx),
+                        loss.item()))
+                if batch_idx == self.len_epoch:
+                    break
         log = self.train_metrics.result()
 
         if self.do_validation:
@@ -101,7 +106,7 @@ class Trainer(TrainerBase):
         self.model.eval()
         self.valid_metrics.reset()
         with torch.no_grad():
-            for batch_idx, (data, target) in enumerate(self.valid_data_loader):
+            for batch_idx, (data, target) in enumerate(tqdm(self.valid_data_loader)):
                 data, target = data.to(self.device), target.to(self.device)
 
                 output = self.model(data)
