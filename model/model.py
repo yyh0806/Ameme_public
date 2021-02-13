@@ -69,6 +69,17 @@ class Resnext50_32x4d(ModelBase):
         return x
 
 
+class EffB4NS(ModelBase):
+    def __init__(self, num_classes):
+        super(EffB4NS, self).__init__()
+        self.model = timm.create_model('tf_efficientnet_b4_ns', pretrained=False)
+        n_features = self.model.classifier.in_features
+        self.model.classifier = nn.Linear(n_features, num_classes)
+    def forward(self, x):
+        x = self.model(x)
+        return x
+
+
 class ViTBase16(ModelBase):
     def __init__(self, num_classes):
         super(ViTBase16, self).__init__()
