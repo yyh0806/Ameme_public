@@ -69,11 +69,11 @@ class Trainer(TrainerBase):
                     loss = mix_criterion(self.criterion, output, targets_a, targets_b, lam)
                 else:
                     loss = self.criterion(output, target)
+                self.train_metrics.update('loss', loss.item())
                 self.scaler.scale(loss).backward()
                 self.scaler.step(self.optimizer)
                 self.scaler.update()
                 self.optimizer.zero_grad()
-                self.train_metrics.update('loss', loss.item())
                 for i, met in enumerate(self.metrics):
                     self.train_metrics.update(met.__name__, met(output, target))
 
