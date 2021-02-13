@@ -5,6 +5,8 @@ from base import ModelBase
 from logger.logger import setup_logging
 import torchvision
 from efficientnet_pytorch import EfficientNet
+from .models.transformer import ViT
+import timm
 
 
 class MnistModel(ModelBase):
@@ -26,17 +28,6 @@ class MnistModel(ModelBase):
         return F.log_softmax(x, dim=1)
 
 
-# class CassavaModel(ModelBase):
-#     def __init__(self, num_classes=5):
-#         super().__init__()
-#         self.model = torchvision.models.resnet152()
-#         self.model.fc = nn.Linear(2048, num_classes, bias=True)
-#
-#     def forward(self, x):
-#         x = self.model(x)
-#         return x
-
-
 class EfficientB0Model(ModelBase):
     def __init__(self, num_classes=5):
         super().__init__()
@@ -45,6 +36,7 @@ class EfficientB0Model(ModelBase):
     def forward(self, x):
         x = self.model(x)
         return x
+
 
 class EfficientB4Model(ModelBase):
     def __init__(self, num_classes=5):
@@ -71,6 +63,28 @@ class Resnext50_32x4d(ModelBase):
         super().__init__()
         self.model = torchvision.models.resnext50_32x4d(num_classes=num_classes, pretrained=False)
         self.model.fc = nn.Linear(2048, num_classes)
+
+    def forward(self, x):
+        x = self.model(x)
+        return x
+
+
+class ViTBase16(ModelBase):
+    def __init__(self, num_classes):
+        super(ViTBase16, self).__init__()
+        self.model = timm.create_model('vit_base_patch16_384', pretrained=False)
+        self.model.head = nn.Linear(self.model.head.in_features, num_classes)
+
+    def forward(self, x):
+        x = self.model(x)
+        return x
+
+
+class Transformer(ModelBase):
+    def __init__(self, image_size, patch_size, num_classes, channels, dim, depth, heads, mlp_dim, dropout=0.1, emb_dropout=0.1):
+        super().__init__()
+        self.model = ViT(image_size=image_size, patch_size=patch_size, num_classes=num_classes, channels=channels,
+                         dim=dim, depth=depth, heads=heads, mlp_dim=mlp_dim, dropout=dropout, emb_dropout=emb_dropout).cuda()
 
     def forward(self, x):
         x = self.model(x)
