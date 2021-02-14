@@ -2,7 +2,7 @@ import torch.nn.functional as F
 import torch.nn as nn
 import numpy as np
 import torch
-from utils.utils import BiTemperedLogisticLoss
+from utils.utils import BiTemperedLogisticLoss, LabelSmoothingCrossEntropy
 
 
 def nll_loss(output, target):
@@ -28,5 +28,5 @@ def FocalCosineLoss(output, target):
 
 
 def BiTemperedLoss(output, target):
-    loss_function = BiTemperedLogisticLoss(reduction='mean', t1=0.7, t2=1.3, label_smoothing=0.3)
+    loss_function = BiTemperedLogisticLoss(reduction='mean', t1=0.6, t2=1.4, label_smoothing=0.2)
     return loss_function(output, target)
