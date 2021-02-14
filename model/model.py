@@ -72,7 +72,7 @@ class Resnext50_32x4d(ModelBase):
 class EffB4NS(ModelBase):
     def __init__(self, num_classes):
         super(EffB4NS, self).__init__()
-        self.model = timm.create_model('tf_efficientnet_b4_ns', pretrained=False)
+        self.model = timm.create_model('tf_efficientnet_b4_ns', pretrained=True)
         n_features = self.model.classifier.in_features
         self.model.classifier = nn.Linear(n_features, num_classes)
     def forward(self, x):

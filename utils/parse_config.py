@@ -6,6 +6,7 @@ from operator import getitem
 from datetime import datetime
 from utils import read_config, write_config
 from logger import setup_logging
+import model.model as module_arch
 
 
 class ConfigParser:
@@ -106,6 +107,12 @@ class ConfigParser:
         assert all([k not in module_args for k in kwargs]), 'Overwriting kwargs given in config file is not allowed'
         module_args.update(kwargs)
         return partial(getattr(module, module_name), *args, **module_args)
+
+    def init_model(self, model_name, model_classes, *args, **kwargs):
+        model_args = {"num_classes": model_classes}
+        assert all([k not in model_args for k in kwargs]), 'Overwriting kwargs given in config file is not allowed'
+        model_args.update(kwargs)
+        return getattr(module_arch, model_name)(*args, **model_args)
 
     def __getitem__(self, name):
         """Access items like ordinary dict."""

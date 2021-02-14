@@ -9,7 +9,7 @@ import os
 import random
 import yaml
 from torch.nn.modules.loss import _Loss
-
+import torch.nn as nn
 
 LOG_DIR = "logs"
 CHECKPOINT_DIR = "checkpoints"
@@ -291,3 +291,23 @@ class BiTemperedLogisticLoss(_Loss):
             loss = loss.mean()
 
         return loss
+
+
+class MyEnsemble(nn.Module):
+
+    def __init__(self, models):
+        super(MyEnsemble, self).__init__()
+        self.models = models
+
+    def forward(self, x):
+        outs = []
+        for model in self.models:
+            out = model(x)
+            outs.append(out)
+
+        size = outs[0].size()
+        o = torch.Tensor(size).cuda()
+        for out in outs:
+            o += out
+
+        return torch.softmax(o, dim=1)

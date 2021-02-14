@@ -16,7 +16,6 @@ class CassavaDataset(Dataset):
         return len(self.filenames)
 
     def __getitem__(self, index):
-        # x = Image.open(os.path.join(self.directory, self.filenames[index]))
         x = cv2.imread(os.path.join(self.directory, self.filenames[index]))
         x = cv2.cvtColor(x, cv2.COLOR_BGR2RGB)
         if "train" in self.directory:
