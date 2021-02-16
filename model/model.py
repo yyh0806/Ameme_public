@@ -59,10 +59,11 @@ class EfficientB6Model(ModelBase):
 
 
 class Resnext50_32x4d(ModelBase):
-    def __init__(self, num_classes=5):
-        super().__init__()
-        self.model = torchvision.models.resnext50_32x4d(num_classes=num_classes, pretrained=False)
-        self.model.fc = nn.Linear(2048, num_classes)
+    def __init__(self, num_classes):
+        super(Resnext50_32x4d, self).__init__()
+        self.model = timm.create_model('resnext50_32x4d', pretrained=True)
+        n_features = self.model.fc.in_features
+        self.model.classifier = nn.Linear(n_features, num_classes)
 
     def forward(self, x):
         x = self.model(x)
@@ -75,6 +76,7 @@ class EffB4NS(ModelBase):
         self.model = timm.create_model('tf_efficientnet_b4_ns', pretrained=True)
         n_features = self.model.classifier.in_features
         self.model.classifier = nn.Linear(n_features, num_classes)
+
     def forward(self, x):
         x = self.model(x)
         return x
@@ -92,10 +94,12 @@ class ViTBase16(ModelBase):
 
 
 class Transformer(ModelBase):
-    def __init__(self, image_size, patch_size, num_classes, channels, dim, depth, heads, mlp_dim, dropout=0.1, emb_dropout=0.1):
+    def __init__(self, image_size, patch_size, num_classes, channels, dim, depth, heads, mlp_dim, dropout=0.1,
+                 emb_dropout=0.1):
         super().__init__()
         self.model = ViT(image_size=image_size, patch_size=patch_size, num_classes=num_classes, channels=channels,
-                         dim=dim, depth=depth, heads=heads, mlp_dim=mlp_dim, dropout=dropout, emb_dropout=emb_dropout).cuda()
+                         dim=dim, depth=depth, heads=heads, mlp_dim=mlp_dim, dropout=dropout,
+                         emb_dropout=emb_dropout).cuda()
 
     def forward(self, x):
         x = self.model(x)

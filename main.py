@@ -19,7 +19,7 @@ from logger.logger import setup_logging
 from utils import prepare_device, seed_everything
 from utils.parse_config import ConfigParser
 import yaml
-from efficientnet_pytorch import EfficientNet
+from utils.ranger import Ranger
 
 
 def train(cfg) -> None:
@@ -46,7 +46,8 @@ def train(cfg) -> None:
 
     # build optimizer, learning rate scheduler. delete every lines containing lr_scheduler for disabling scheduler
     trainable_params = filter(lambda p: p.requires_grad, model.parameters())
-    optimizer = cfg.init_obj('optimizer', torch.optim, trainable_params)
+    # optimizer = cfg.init_obj('optimizer', torch.optim, trainable_params)
+    optimizer = Ranger(trainable_params)
     lr_scheduler = cfg.init_obj('lr_scheduler', torch.optim.lr_scheduler, optimizer)
 
     trainer = Trainer(model, criterion, metrics, optimizer,
