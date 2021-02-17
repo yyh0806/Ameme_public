@@ -1,6 +1,6 @@
 import torch.nn as nn
 import numpy as np
-from log.logger import setup_logger
+from abc import abstractmethod
 
 
 class ModelBase(nn.Module):
@@ -8,10 +8,7 @@ class ModelBase(nn.Module):
     Base class for all models
     """
 
-    def __init__(self, verbose=0):
-        super().__init__()
-        self.logger = setup_logger(self, verbose=verbose)
-
+    @abstractmethod
     def forward(self, *inputs):
         """
         Forward pass logic
@@ -26,4 +23,4 @@ class ModelBase(nn.Module):
         """
         model_parameters = filter(lambda p: p.requires_grad, self.parameters())
         params = sum([np.prod(p.size()) for p in model_parameters])
-        return super().__str__() + '\nTrainable parameters: {}'.format(params)
+        return super().__str__() + f"\nTrainable parameters: {params}"

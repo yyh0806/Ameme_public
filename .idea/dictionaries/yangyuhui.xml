@@ -5,6 +5,7 @@
       <w>datapath</w>
       <w>logprobs</w>
       <w>optim</w>
+      <w>visdom</w>
     </words>
   </dictionary>
 </component>
