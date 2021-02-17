@@ -15,7 +15,7 @@ import pandas as pd
 class CassavaDataLoader(DataLoaderBase):
 
     def __init__(self, data_dir, batch_size, shuffle=True, validation_split=0.0, num_workers=0):
-        train = pd.read_csv(data_dir[:-12] + 'train.csv')
+        train = pd.read_csv(data_dir[:-13] + 'train.csv')
         X_Train, Y_Train = train['image_id'].values, train['label'].values
         transforms = CassavaTransforms()
         self.train_dataset = CassavaDataset(data_dir, X_Train, Y_Train, transforms)

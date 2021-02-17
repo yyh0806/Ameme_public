@@ -30,8 +30,6 @@ class Trainer(TrainerBase):
         self.do_validation = self.valid_data_loader is not None
         self.lr_scheduler = lr_scheduler
         self.log_step = int(np.sqrt(data_loader.batch_size))
-        if self.config['trainer']['visdom']:
-            self.plotter = VisdomLinePlotter(self.viz)
 
         self.train_metrics = MetricTracker('loss', *[m.__name__ for m in self.metrics], writer=None)
         self.valid_metrics = MetricTracker('loss', *[m.__name__ for m in self.metrics], writer=None)
@@ -50,8 +48,6 @@ class Trainer(TrainerBase):
         for batch_idx, (data, target) in enumerate(tqdm(self.data_loader)):
             with autocast():
                 data, target = data.to(self.device), target.to(self.device)
-                if self.config['trainer']['visdom']:
-                    self.viz.images(data, nrow=6, win=1, opts={'title': 'data'})
 
                 self.optimizer.zero_grad()
                 output = self.model(data)
@@ -59,13 +55,9 @@ class Trainer(TrainerBase):
                 r_cutmix = np.random.rand(1)
                 if self.config['mixup']['use'] and r_mixup < self.config['mixup']['prob']:
                     data, targets_a, targets_b, lam = mixup_data(data, target, self.config['mixup']['alpha'])
-                    if self.config['trainer']['visdom']:
-                        self.viz.images(data, nrow=8, win=11, opts={'title': 'mixup'})
                     loss = mix_criterion(self.criterion, output, targets_a, targets_b, lam)
                 elif self.config['cutmix']['use'] and r_cutmix < self.config['cutmix']['prob']:
                     data, targets_a, targets_b, lam = cutmix_data(data, target, self.config['cutmix']['alpha'])
-                    if self.config['trainer']['visdom']:
-                        self.viz.images(data, nrow=8, win=12, opts={'title': 'mixup'})
                     loss = mix_criterion(self.criterion, output, targets_a, targets_b, lam)
                 else:
                     loss = self.criterion(output, target)
@@ -89,16 +81,12 @@ class Trainer(TrainerBase):
         if self.do_validation:
             val_log = self._valid_epoch(epoch)
             log.update(**{'val_' + k: v for k, v in val_log.items()})
-            if self.config['trainer']['visdom']:
-                self.plotter.plot('loss', 'train', 'train_loss', epoch, log["loss"])
-                self.plotter.plot('loss', 'val', 'val_loss', epoch, log["val_loss"])
+
         if self.lr_scheduler is not None:
             if type(self.lr_scheduler) == torch.optim.lr_scheduler.ReduceLROnPlateau:
                 self.lr_scheduler.step(log["val_loss"])
             else:
                 self.lr_scheduler.step()
-        if self.config['trainer']['visdom']:
-            self.viz.text(str(log), win=3)
         return log
 
     def _valid_epoch(self, epoch: int) -> dict:

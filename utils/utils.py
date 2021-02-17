@@ -11,8 +11,6 @@ import yaml
 
 import torch.nn as nn
 
-
-
 LOG_DIR = "logs"
 CHECKPOINT_DIR = "checkpoints"
 RUN_DIR = "runs"
