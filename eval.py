@@ -1,25 +1,13 @@
-import os
-import random
-from typing import Any, List, Tuple, Dict
-from types import ModuleType
 import argparse
 import collections
-import numpy as np
 import torch
-import torch.nn as nn
-import torch.optim as module_optimizer
-import torch.optim.lr_scheduler as module_scheduler
 
 import data_loader.data_loaders as module_data
-import model.loss as module_loss
+import loss.loss as module_loss
 import model.metric as module_metric
-import model.model as module_arch
-from trainer import Trainer
-from logger.logger import setup_logging
 from utils import prepare_device, seed_everything, MyEnsemble
 from utils.parse_config import ConfigParser
-import yaml
-from utils import inf_loop, MetricTracker
+from utils import MetricTracker
 from tqdm import tqdm
 
 
