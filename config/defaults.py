@@ -17,7 +17,7 @@ _C.DATA_LOADER.ARGS.validation_split = 0.1
 _C.DATA_LOADER.ARGS.num_workers = 0
 
 _C.MODEL = CN()
-_C.MODEL.TYPE = "EfficientB4"
+_C.MODEL.TYPE = "tf_efficientnet_b4_ns"
 _C.MODEL.ARGS = CN()
 _C.MODEL.ARGS.num_classes = 5
 _C.MODEL.ARGS.pretrained = True

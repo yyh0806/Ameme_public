@@ -4,7 +4,7 @@ import torch
 import logging
 from trainer import Trainer
 from data_loader.data_loaders import *
-from model.model import *
+from model.models import *
 from loss import *
 from torch.optim import *
 from torch.optim.lr_scheduler import *
@@ -23,7 +23,7 @@ def train(config) -> None:
     data_loader = eval(config["DATA_LOADER"]["TYPE"])(**config["DATA_LOADER"]["ARGS"])
     valid_data_loader = data_loader.split_validation()
     # build model architecture, then print to console
-    model = eval(config["MODEL"]["TYPE"])(**config["MODEL"]["ARGS"])
+    model = create_model((config["MODEL"]["TYPE"]))(**config["MODEL"]["ARGS"])
     logger.info(model)
 
     # prepare for (multi-device) GPU training
