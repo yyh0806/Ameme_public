@@ -33,7 +33,7 @@ from functools import partial
 import torch
 import torch.nn as nn
 
-from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
+from config.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from .helpers import build_model_with_cfg
 from .layers import ClassifierHead, ConvBnAct, DropPath, AvgPool2dSame, \
     create_conv2d, get_act_layer, get_attn, convert_norm_act, make_divisible

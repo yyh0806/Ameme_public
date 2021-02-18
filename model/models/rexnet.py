@@ -13,7 +13,7 @@ Copyright 2020 Ross Wightman
 import torch.nn as nn
 from math import ceil
 
-from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
+from config.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from .helpers import build_model_with_cfg
 from .layers import ClassifierHead, create_act_layer, ConvBnAct, DropPath, make_divisible
 from .registry import register_model

@@ -10,10 +10,6 @@ from torch.cuda.amp import autocast, GradScaler
 
 
 class Trainer(TrainerBase):
-    """
-    Responsible for training loop and validation.
-    """
-
     def __init__(self, model, criterion, metrics, optimizer, config, device,
                  data_loader, valid_data_loader=None, lr_scheduler=None, len_epoch=None, scaler=GradScaler()):
         super().__init__(model, criterion, metrics, optimizer, config)
@@ -30,37 +26,18 @@ class Trainer(TrainerBase):
         self.do_validation = self.valid_data_loader is not None
         self.lr_scheduler = lr_scheduler
         self.log_step = int(np.sqrt(data_loader.batch_size))
-
         self.train_metrics = MetricTracker('loss', *[m.__name__ for m in self.metrics], writer=None)
         self.valid_metrics = MetricTracker('loss', *[m.__name__ for m in self.metrics], writer=None)
 
     def _train_epoch(self, epoch: int) -> dict:
-        """
-        Training logic for an epoch
-
-        Returns
-        -------
-        dict
-            Dictionary containing results for the epoch.
-        """
         self.model.train()
         self.train_metrics.reset()
         for batch_idx, (data, target) in enumerate(tqdm(self.data_loader)):
             with autocast():
                 data, target = data.to(self.device), target.to(self.device)
-
                 self.optimizer.zero_grad()
                 output = self.model(data)
-                r_mixup = np.random.rand(1)
-                r_cutmix = np.random.rand(1)
-                if self.config['mixup']['use'] and r_mixup < self.config['mixup']['prob']:
-                    data, targets_a, targets_b, lam = mixup_data(data, target, self.config['mixup']['alpha'])
-                    loss = mix_criterion(self.criterion, output, targets_a, targets_b, lam)
-                elif self.config['cutmix']['use'] and r_cutmix < self.config['cutmix']['prob']:
-                    data, targets_a, targets_b, lam = cutmix_data(data, target, self.config['cutmix']['alpha'])
-                    loss = mix_criterion(self.criterion, output, targets_a, targets_b, lam)
-                else:
-                    loss = self.criterion(output, target)
+                loss = self.criterion(output, target)
                 self.train_metrics.update('loss', loss.item())
                 self.scaler.scale(loss).backward()
                 self.scaler.step(self.optimizer)
@@ -90,27 +67,17 @@ class Trainer(TrainerBase):
         return log
 
     def _valid_epoch(self, epoch: int) -> dict:
-        """
-        Validate after training an epoch
-
-        Returns
-        -------
-        dict
-            Contains keys 'val_loss' and 'val_metrics'.
-        """
         self.model.eval()
         self.valid_metrics.reset()
         with torch.no_grad():
             for batch_idx, (data, target) in enumerate(tqdm(self.valid_data_loader)):
                 data, target = data.to(self.device), target.to(self.device)
-
                 output = self.model(data)
                 loss = self.criterion(output, target)
-
                 self.valid_metrics.update('loss', loss.item())
+
                 for met in self.metrics:
                     self.valid_metrics.update(met.__name__, met(output, target))
-
         return self.valid_metrics.result()
 
     def _progress(self, batch_idx):

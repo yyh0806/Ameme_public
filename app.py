@@ -5,13 +5,16 @@ import logging
 from trainer import Trainer
 from data_loader.data_loaders import *
 from model.model import *
-from loss import *
+from loss.loss import *
 from torch.optim import *
 from torch.optim.lr_scheduler import *
 from model.metric import *
 from logger.logger import setup_logging
 from utils import prepare_device, seed_everything
 from config import cfg
+import streamlit as st
+import numpy as np
+import pandas as pd
 
 
 def train(config) -> None:
@@ -53,5 +56,10 @@ def train(config) -> None:
 if __name__ == "__main__":
     cfg.merge_from_file("experiments/config.yml")
     cfg.freeze()
-
-    train(cfg)
+    st.title('Ameme')
+    sidebar_title = st.sidebar.title("Train")
+    loss_selections = ("nll_loss", "CrossEntropyLoss", "FocalCosineLoss", "BiTemperedLoss")
+    loss_selectBox = st.sidebar.selectbox("Loss", loss_selections)
+    optimizer_selections = ("ts1", "test2")
+    optimizer_selectBox = st.sidebar.selectbox("optimizer", optimizer_selections)
+    # train(cfg)

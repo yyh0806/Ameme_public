@@ -26,7 +26,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
+from config.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from .helpers import load_pretrained
 from .layers import StdConv2dSame, DropPath, to_2tuple, trunc_normal_
 from .resnet import resnet26d, resnet50d

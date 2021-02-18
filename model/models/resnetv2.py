@@ -34,7 +34,7 @@ import torch
 import torch.nn as nn
 from functools import partial
 
-from timm.data import IMAGENET_INCEPTION_MEAN, IMAGENET_INCEPTION_STD
+from config.constants import IMAGENET_INCEPTION_MEAN, IMAGENET_INCEPTION_STD
 from .helpers import build_model_with_cfg
 from .registry import register_model
 from .layers import GroupNormAct, ClassifierHead, DropPath, AvgPool2dSame, create_pool2d, StdConv2d

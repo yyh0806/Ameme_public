@@ -16,11 +16,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
+from config.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from .helpers import build_model_with_cfg
 from .layers import ClassifierHead, ConvBnAct, DropPath, create_attn, get_norm_act_layer
 from .registry import register_model
-
 
 __all__ = ['CspNet']  # model_registry will add each entrypoint fn to this
 
@@ -43,7 +42,8 @@ default_cfgs = {
     'cspresnet50w': _cfg(url=''),
     'cspresnext50': _cfg(
         url='https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-weights/cspresnext50_ra_224-648b4713.pth',
-        input_size=(3, 224, 224), pool_size=(7, 7), crop_pct=0.875  # FIXME I trained this at 224x224, not 256 like ref impl
+        input_size=(3, 224, 224), pool_size=(7, 7), crop_pct=0.875
+        # FIXME I trained this at 224x224, not 256 like ref impl
     ),
     'cspresnext50_iabn': _cfg(url=''),
     'cspdarknet53': _cfg(
@@ -51,7 +51,6 @@ default_cfgs = {
     'cspdarknet53_iabn': _cfg(url=''),
     'darknet53': _cfg(url=''),
 }
-
 
 model_cfgs = dict(
     cspresnet50=dict(
@@ -187,7 +186,7 @@ class ResBottleneck(nn.Module):
             x = self.drop_path(x)
         x = x + shortcut
         # FIXME partial shortcut needed if first block handled as per original, not used for my current impl
-        #x[:, :shortcut.size(1)] += shortcut
+        # x[:, :shortcut.size(1)] += shortcut
         x = self.act3(x)
         return x
 
@@ -224,6 +223,7 @@ class DarkBlock(nn.Module):
 
 class CrossStage(nn.Module):
     """Cross Stage."""
+
     def __init__(self, in_chs, out_chs, stride, dilation, depth, block_ratio=1., bottle_ratio=1., exp_ratio=1.,
                  groups=1, first_dilation=None, down_growth=False, cross_linear=False, block_dpr=None,
                  block_fn=ResBottleneck, **block_kwargs):
@@ -445,7 +445,8 @@ def cspdarknet53(pretrained=False, **kwargs):
 @register_model
 def cspdarknet53_iabn(pretrained=False, **kwargs):
     norm_layer = get_norm_act_layer('iabn')
-    return _create_cspnet('cspdarknet53_iabn', pretrained=pretrained, block_fn=DarkBlock, norm_layer=norm_layer, **kwargs)
+    return _create_cspnet('cspdarknet53_iabn', pretrained=pretrained, block_fn=DarkBlock, norm_layer=norm_layer,
+                          **kwargs)
 
 
 @register_model

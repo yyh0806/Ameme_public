@@ -10,7 +10,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from typing import Union, List, Dict, Any, cast
 
-from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
+from config.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from .helpers import build_model_with_cfg
 from .layers import ClassifierHead, ConvBnAct
 from .registry import register_model
