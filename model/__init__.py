@@ -1,2 +1,2 @@
 from .metric import *
-from .model import *
+from .models import *

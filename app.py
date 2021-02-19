@@ -4,8 +4,8 @@ import torch
 import logging
 from trainer import Trainer
 from data_loader.data_loaders import *
-from model.model import *
-from loss.loss import *
+from model.models import *
+from loss.losses import *
 from torch.optim import *
 from torch.optim.lr_scheduler import *
 from model.metric import *

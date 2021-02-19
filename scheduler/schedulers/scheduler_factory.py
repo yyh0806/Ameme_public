@@ -22,7 +22,7 @@ def create_scheduler(args, optimizer):
         noise_range = None
 
     lr_scheduler = None
-    if args.sched == 'cosine':
+    if args.TYPE == 'cosine':
         lr_scheduler = CosineLRScheduler(
             optimizer,
             t_initial=num_epochs,
@@ -39,7 +39,7 @@ def create_scheduler(args, optimizer):
             noise_seed=getattr(args, 'seed', 42),
         )
         num_epochs = lr_scheduler.get_cycle_length() + args.cooldown_epochs
-    elif args.sched == 'tanh':
+    elif args.TYPE == 'tanh':
         lr_scheduler = TanhLRScheduler(
             optimizer,
             t_initial=num_epochs,
@@ -55,7 +55,7 @@ def create_scheduler(args, optimizer):
             noise_seed=getattr(args, 'seed', 42),
         )
         num_epochs = lr_scheduler.get_cycle_length() + args.cooldown_epochs
-    elif args.sched == 'step':
+    elif args.TYPE == 'step':
         lr_scheduler = StepLRScheduler(
             optimizer,
             decay_t=args.decay_epochs,
@@ -67,7 +67,7 @@ def create_scheduler(args, optimizer):
             noise_std=getattr(args, 'lr_noise_std', 1.),
             noise_seed=getattr(args, 'seed', 42),
         )
-    elif args.sched == 'plateau':
+    elif args.TYPE == 'plateau':
         mode = 'min' if 'loss' in getattr(args, 'eval_metric', '') else 'max'
         lr_scheduler = PlateauLRScheduler(
             optimizer,

@@ -6,8 +6,8 @@ from trainer import Trainer
 from data_loader.data_loaders import *
 from model.models import *
 from loss import *
-from torch.optim import *
-from torch.optim.lr_scheduler import *
+from optimizer.optimizers import *
+from scheduler.schedulers import *
 from model.metric import *
 from logger.logger import setup_logging
 from utils import prepare_device, seed_everything
@@ -33,14 +33,13 @@ def train(config) -> None:
         model = torch.nn.DataParallel(model, device_ids=device_ids)
 
     # get function handles of loss and metrics
-    criterion = eval(config['LOSS'])
+    criterion = eval(config['LOSS']).to(device)
     metrics = [eval(met) for met in config['METRICS']]
 
     # build optimizer, learning rate scheduler. delete every lines containing lr_scheduler for disabling scheduler
-    trainable_params = filter(lambda p: p.requires_grad, model.parameters())
-    optimizer = eval(config["OPTIMIZER"]["TYPE"])(trainable_params, **config["OPTIMIZER"]["ARGS"])
-    lr_scheduler = eval(config["LR_SCHEDULER"]["TYPE"])(optimizer, **config["LR_SCHEDULER"]["ARGS"])
-
+    optimizer = create_optimizer(config["OPTIMIZER"]["TYPE"])(**config["OPTIMIZER"]["ARGS"], model=model)
+    lr_scheduler, num_epochs = create_scheduler(config["LR_SCHEDULER"]["TYPE"])(**config["LR_SCHEDULER"]["ARGS"],
+                                                                                optimizer=optimizer)
     trainer = Trainer(model, criterion, metrics, optimizer,
                       config=config,
                       device=device,
