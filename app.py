@@ -4,10 +4,10 @@ import torch
 import logging
 from trainer import Trainer
 from data_loader.data_loaders import *
-from model.models import *
-from loss.losses import *
-from torch.optim import *
-from torch.optim.lr_scheduler import *
+import model.model as model_module
+import loss.loss as loss_module
+import optimizer.optimizer as optimizer_module
+import scheduler.scheduler as scheduler_module
 from model.metric import *
 from logger.logger import setup_logging
 from utils import prepare_device, seed_everything
@@ -15,6 +15,8 @@ from config import cfg
 import streamlit as st
 import numpy as np
 import pandas as pd
+import inspect
+import utils.SessionState as session
 
 
 def train(config) -> None:
@@ -54,12 +56,35 @@ def train(config) -> None:
 
 
 if __name__ == "__main__":
+    st.set_page_config(page_title='Ameme', page_icon=":shark:", layout='centered', initial_sidebar_state='auto')
     cfg.merge_from_file("experiments/config.yml")
     cfg.freeze()
-    st.title('Ameme')
-    sidebar_title = st.sidebar.title("Train")
-    loss_selections = ("nll_loss", "CrossEntropyLoss", "FocalCosineLoss", "BiTemperedLoss")
-    loss_selectBox = st.sidebar.selectbox("Loss", loss_selections)
-    optimizer_selections = ("ts1", "test2")
-    optimizer_selectBox = st.sidebar.selectbox("optimizer", optimizer_selections)
-    # train(cfg)
+
+    model_selections = []
+    for name, obj in inspect.getmembers(model_module, inspect.isclass):
+        if "model.model" in str(obj):
+            model_selections.append(str(obj)[20:-2])
+    loss_selections = []
+    for name, obj in inspect.getmembers(loss_module, inspect.isfunction):
+        loss_name = str(obj).split(" ")[1]
+        loss_selections.append(loss_name)
+
+    trainer_container = st.sidebar.beta_container()
+    trainer_container.title('Trainer')
+    model_selectBox = trainer_container.selectbox("Model", model_selections)
+    loss_selectBox = trainer_container.selectbox("Loss", loss_selections)
+
+    add_btn = trainer_container.button("确定")
+
+    session_trainer = session.get(trainer_dict={"models": [], "losses": []})
+
+    if add_btn:
+        session_trainer.trainer_dict["models"].append(model_selectBox)
+        session_trainer.trainer_dict["losses"].append(loss_selectBox)
+
+    trainer_dataFrame = st.dataframe(session_trainer.trainer_dict)
+
+    # optimizer_selections = ("test1", "test2")
+    # optimizer_selectBox = optimizer_col.selectbox("optimizer", optimizer_selections)
+    # scheduler_selections = ("cosine", "step")
+    # scheduler_selectBox = scheduler_col.selectbox("scheduler", scheduler_selections)
