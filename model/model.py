@@ -1,4 +1,3 @@
-import torch.nn as nn
 from model.models import create_model
 from base import ModelBase
 

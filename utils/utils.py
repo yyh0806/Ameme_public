@@ -188,3 +188,12 @@ class MyEnsemble(nn.Module):
             o += out
 
         return torch.softmax(o, dim=1)
+
+
+def top_k_acc(output, target, k):
+    pred = torch.topk(output, k, dim=1)[1]
+    assert pred.shape[0] == len(target)
+    correct = 0
+    for i in range(k):
+        correct += torch.sum(pred[:, i] == target).item()
+    return correct / len(target)

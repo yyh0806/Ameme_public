@@ -10,11 +10,10 @@ from torch.cuda.amp import autocast, GradScaler
 
 
 class Trainer(TrainerBase):
-    def __init__(self, model, criterion, metrics, optimizer, config, device,
-                 data_loader, valid_data_loader=None, lr_scheduler=None, len_epoch=None, scaler=GradScaler()):
-        super().__init__(model, criterion, metrics, optimizer, config)
-        self.scaler = scaler
-        self.config = config
+    def __init__(self, model, epoch, criterion, metrics, optimizer,  device,
+                 data_loader, valid_data_loader=None, lr_scheduler=None, len_epoch=None, checkpoint=None):
+        super().__init__(model, criterion, metrics, optimizer, epoch, checkpoint)
+        self.scaler = GradScaler()
         self.device = device
         self.data_loader = data_loader
         if len_epoch is None:

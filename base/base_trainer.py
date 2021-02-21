@@ -14,20 +14,19 @@ class TrainerBase:
     """
     Base class for all trainers
     """
-    def __init__(self, model, criterion, metrics, optimizer, config):
-        self.config = config
+    def __init__(self, model, criterion, metrics, optimizer, epoch, checkpoint=None):
         self.logger = logging.getLogger("trainer")
 
         self.model = model
         self.criterion = criterion
         self.metrics = metrics
         self.optimizer = optimizer
-
+        self.epoch = epoch
         self.start_epoch = 1
-        self.epochs = config["TRAINER"]["epochs"]
-        self.checkpoint_dir = config.SAVE_DIR
-        if config.RESUME is not None:
-            self._resume_checkpoint(config.RESUME)
+        self.checkpoint_dir = "./"
+        self.save_period = 1
+        if checkpoint is not None:
+            self._resume_checkpoint(checkpoint)
 
     def train(self):
         self.logger.info('Starting training...')
