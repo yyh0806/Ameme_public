@@ -10,9 +10,9 @@ from torch.cuda.amp import autocast, GradScaler
 
 
 class Trainer(TrainerBase):
-    def __init__(self, model, epoch, criterion, metrics, optimizer,  device,
-                 data_loader, valid_data_loader=None, lr_scheduler=None, len_epoch=None, checkpoint=None):
-        super().__init__(model, criterion, metrics, optimizer, epoch, checkpoint)
+    def __init__(self, model, epoch, criterion, metrics, optimizer,  device, data_loader, valid_data_loader=None,
+                 lr_scheduler=None, len_epoch=None, checkpoint=None, st_process=None, st_stop=False):
+        super().__init__(model, criterion, metrics, optimizer, epoch, checkpoint, st_stop=st_stop)
         self.scaler = GradScaler()
         self.device = device
         self.data_loader = data_loader
@@ -24,6 +24,8 @@ class Trainer(TrainerBase):
         self.valid_data_loader = valid_data_loader
         self.do_validation = self.valid_data_loader is not None
         self.lr_scheduler = lr_scheduler
+        self.processBar = st_process
+        self.st_stop = st_stop
         self.log_step = int(np.sqrt(data_loader.batch_size))
         self.train_metrics = MetricTracker('loss', *[m.__name__ for m in self.metrics], writer=None)
         self.valid_metrics = MetricTracker('loss', *[m.__name__ for m in self.metrics], writer=None)
@@ -31,7 +33,9 @@ class Trainer(TrainerBase):
     def _train_epoch(self, epoch: int) -> dict:
         self.model.train()
         self.train_metrics.reset()
-        for batch_idx, (data, target) in enumerate(tqdm(self.data_loader)):
+        for batch_idx, (data, target) in enumerate(self.data_loader):
+            if self.st_stop:
+                break
             with autocast():
                 data, target = data.to(self.device), target.to(self.device)
                 self.optimizer.zero_grad()
@@ -46,10 +50,7 @@ class Trainer(TrainerBase):
                     self.train_metrics.update(met.__name__, met(output, target))
 
                 if batch_idx % self.log_step == 0:
-                    self.logger.debug('Train Epoch: {} {} Loss: {:.6f}'.format(
-                        epoch,
-                        self._progress(batch_idx),
-                        loss.item()))
+                    self.processBar.progress(batch_idx / self.len_epoch)
                 if batch_idx == self.len_epoch:
                     break
         log = self.train_metrics.result()
@@ -69,7 +70,7 @@ class Trainer(TrainerBase):
         self.model.eval()
         self.valid_metrics.reset()
         with torch.no_grad():
-            for batch_idx, (data, target) in enumerate(tqdm(self.valid_data_loader)):
+            for batch_idx, (data, target) in enumerate(self.valid_data_loader):
                 data, target = data.to(self.device), target.to(self.device)
                 output = self.model(data)
                 loss = self.criterion(output, target)

@@ -24,5 +24,5 @@ def FocalCosineLoss(output, target):
 
 
 def BiTemperedLoss(output, target):
-    loss_function = BiTemperedLogisticLoss(reduction='mean', t1=0.6, t2=1.4, label_smoothing=0.2)
+    loss_function = BiTemperedLogisticLoss(reduction='mean', t1=0.6, t2=1.4, label_smoothing=0.2).cuda()
     return loss_function(output, target)

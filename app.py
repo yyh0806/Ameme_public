@@ -14,10 +14,11 @@ from utils import prepare_device, seed_everything
 from config import cfg
 import streamlit as st
 import numpy as np
+import os
+import signal
 import pandas as pd
 import inspect
 import utils.SessionState as session
-
 from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode, JsCode
 
 if __name__ == "__main__":
@@ -81,7 +82,6 @@ if __name__ == "__main__":
     gb = GridOptionsBuilder.from_dataframe(trainer_dataFrame)
     gb.configure_selection('multiple', use_checkbox=False, rowMultiSelectWithClick=False,
                            suppressRowDeselection=True)
-    gb.configure_grid_options(domLayout='normal')
     gridOptions = gb.build()
     grid_response = AgGrid(
         trainer_dataFrame,
@@ -131,6 +131,8 @@ if __name__ == "__main__":
             params_dict["optimizer_params"] = {}
         if "scheduler_params" not in params_dict.keys():
             params_dict["scheduler_params"] = {}
+        if "pid" not in params_dict.keys():
+            params_dict["pid"] = 0
 
         model_sig = inspect.signature(eval('model_module.' + trainer_model).__init__)
         for name, param in model_sig.parameters.items():
@@ -142,8 +144,10 @@ if __name__ == "__main__":
             else:
                 param_input = model_params_col_ex.text_input(str(trainer_id) + "_model_" + name)
             if param_input:
-                sessions.trainer_params[trainer_id]["model_params"][name] = param_input
-
+                if "str" in str(param.annotation):
+                    sessions.trainer_params[trainer_id]["model_params"][name] = param_input
+                else:
+                    sessions.trainer_params[trainer_id]["model_params"][name] = param.annotation(eval(param_input))
         optimizer_sig = inspect.signature(eval('optimizer_module.' + trainer_optimizer))
         for name, param in optimizer_sig.parameters.items():
             if name == "kwargs":
@@ -157,7 +161,10 @@ if __name__ == "__main__":
             else:
                 param_input = optimizer_params_col_ex.text_input(str(trainer_id) + "_optimizer_" + name)
             if param_input:
-                sessions.trainer_params[trainer_id]["optimizer_params"][name] = param_input
+                if "str" in str(param.annotation):
+                    sessions.trainer_params[trainer_id]["optimizer_params"][name] = param_input
+                else:
+                    sessions.trainer_params[trainer_id]["optimizer_params"][name] = param.annotation(eval(param_input))
 
         scheduler_sig = inspect.signature(eval('scheduler_module.' + trainer_scheduler))
         for name, param in scheduler_sig.parameters.items():
@@ -172,11 +179,15 @@ if __name__ == "__main__":
             else:
                 param_input = scheduler_params_col_ex.text_input(str(trainer_id) + "_scheduler_" + name)
             if param_input:
-                sessions.trainer_params[trainer_id]["scheduler_params"][name] = param_input
+                if "str" in str(param.annotation):
+                    sessions.trainer_params[trainer_id]["scheduler_params"][name] = param_input
+                else:
+                    sessions.trainer_params[trainer_id]["scheduler_params"][name] = param.annotation(eval(param_input))
 
         trainer_process = st.beta_container()
-        trainer_start_col, trainer_processbar_col = trainer_process.beta_columns((1, 3))
+        trainer_start_col, trainer_stop_col, trainer_processbar_col = trainer_process.beta_columns((1, 1, 3))
         trainer_start_btn = trainer_start_col.button("trainer_" + str(trainer_id) + "_start")
+        trainer_stop_btn = trainer_stop_col.button("trainer_" + str(trainer_id) + "_end")
         trainer_processbar = trainer_processbar_col.progress(0)
         # TODO delete config file
         if trainer_start_btn:
@@ -184,25 +195,28 @@ if __name__ == "__main__":
             logger = logging.getLogger()
             seed_everything(cfg['SEED'])
             # data
-            data_loader = eval(trainer_dataloader + "DataLoader")(**cfg["DATA_LOADER"]["ARGS"])
+            data_loader = eval("data_module." + trainer_dataloader + "DataLoader")(**cfg["DATA_LOADER"]["ARGS"])
             valid_data_loader = data_loader.split_validation()
             # model
-            model = eval(trainer_model)(sessions.trainer_params[trainer_id]["model_params"])
-            logger.info(model)
+            model = eval("model_module." + trainer_model)(**sessions.trainer_params[trainer_id]["model_params"])
+            # logger.info(model)
             # gpu
             device, device_ids = prepare_device(cfg['N_GPU'])
             model = model.to(device)
             if len(device_ids) > 1:
                 model = torch.nn.DataParallel(model, device_ids=device_ids)
             # criterion
-            criterion = eval(trainer_loss).to(device)
+            criterion = eval("loss_module." + trainer_loss)
             # metrics
-            metrics = [eval(met) for met in trainer_metrics]
+            metrics = [eval("metric_module." + met) for met in eval(trainer_metrics)]
+
             # optimizer
-            optimizer = eval(trainer_optimizer)(sessions.trainer_params[trainer_id]["optimizer_params"], model=model)
+            optimizer = eval("optimizer_module." + trainer_optimizer)(
+                **sessions.trainer_params[trainer_id]["optimizer_params"], params=model.parameters())
             # lr_scheduler
-            lr_scheduler = eval(trainer_scheduler)(sessions.trainer_params[trainer_id]['scheduler_params'],
-                                                   optimizer=optimizer)
+            lr_scheduler = eval("scheduler_module." + trainer_scheduler)(**sessions.trainer_params[trainer_id][
+                'scheduler_params'],
+                                                                         optimizer=optimizer)
 
             trainer = Trainer(model=model,
                               criterion=criterion,
@@ -212,5 +226,11 @@ if __name__ == "__main__":
                               device=device,
                               data_loader=data_loader,
                               valid_data_loader=valid_data_loader,
-                              lr_scheduler=lr_scheduler)
+                              lr_scheduler=lr_scheduler,
+                              st_process=trainer_processbar,
+                              st_stop=trainer_stop_btn)
             trainer.train()
+            trainer_start_btn = None
+
+        if trainer_stop_btn:
+            pass

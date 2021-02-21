@@ -6,7 +6,6 @@ import math
 from subprocess import Popen, PIPE
 import yaml
 import torch
-from tqdm import tqdm
 from visdom import Visdom
 
 
@@ -14,25 +13,27 @@ class TrainerBase:
     """
     Base class for all trainers
     """
-    def __init__(self, model, criterion, metrics, optimizer, epoch, checkpoint=None):
+    def __init__(self, model, criterion, metrics, optimizer, epoch, checkpoint=None, st_stop=False):
         self.logger = logging.getLogger("trainer")
 
         self.model = model
         self.criterion = criterion
         self.metrics = metrics
         self.optimizer = optimizer
-        self.epoch = epoch
+        self.epochs = epoch
         self.start_epoch = 1
         self.checkpoint_dir = "./"
         self.save_period = 1
+        self.st_stop = st_stop
         if checkpoint is not None:
             self._resume_checkpoint(checkpoint)
 
     def train(self):
         self.logger.info('Starting training...')
         for epoch in range(self.start_epoch, self.epochs + 1):
+            if self.st_stop:
+                break
             result = self._train_epoch(epoch)
-
             log = {'epoch': epoch}
             log.update(result)
 
