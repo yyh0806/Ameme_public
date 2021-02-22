@@ -184,7 +184,8 @@ if __name__ == "__main__":
                     sessions.trainer_params[trainer_id]["scheduler_params"][name] = param.annotation(eval(param_input))
 
         trainer_process = st.beta_container()
-        trainer_start_col, trainer_stop_col, trainer_processbar_col = trainer_process.beta_columns((1, 1, 3))
+        epochs_col, trainer_start_col, trainer_stop_col, trainer_processbar_col = trainer_process.beta_columns((2, 1, 1, 2))
+        epochs_input = epochs_col.number_input("epochs", min_value=1, max_value=1000, value=20)
         trainer_start_btn = trainer_start_col.button("trainer_" + str(trainer_id) + "_start")
         trainer_stop_btn = trainer_stop_col.button("trainer_" + str(trainer_id) + "_stop")
         trainer_processbar = trainer_processbar_col.progress(0)
@@ -216,12 +217,12 @@ if __name__ == "__main__":
             lr_scheduler = eval("scheduler_module." + trainer_scheduler)(**sessions.trainer_params[trainer_id][
                 'scheduler_params'],
                                                                          optimizer=optimizer)
-
+            trainer_epoch = epochs_input
             trainer = Trainer(model=model,
                               criterion=criterion,
                               metrics=metrics,
                               optimizer=optimizer,
-                              epoch=100,
+                              epoch=trainer_epoch,
                               device=device,
                               data_loader=data_loader,
                               valid_data_loader=valid_data_loader,
