@@ -57,13 +57,12 @@ if __name__ == "__main__":
     loss_selectBox = trainer_container.selectbox("Loss", loss_selections)
     optimizer_selectBox = trainer_container.selectbox("Optimizer", optimizer_selections)
     scheduler_selectBox = trainer_container.selectbox("Scheduler", scheduler_selections)
-    metric_selects = trainer_container.multiselect("Metric", metric_selections)
-    add_btn = trainer_container.button("确定")
+    metric_selects = trainer_container.multiselect("Metric", metric_selections, default="accuracy")
+    add_btn = trainer_container.button("Add Trainer")
 
     sessions = session.get(
         key=0,
         id=0,
-        # trainer_params=[{"model_params": {}, "optimizer_params": {}, "scheduler_params": {}}],
         trainer_params={},
         trainer_dict={"id": [], "dataloader": [], "model": [], "loss": [], "optimizer": [], "scheduler": [],
                       "metrics": []})
@@ -187,7 +186,7 @@ if __name__ == "__main__":
         trainer_process = st.beta_container()
         trainer_start_col, trainer_stop_col, trainer_processbar_col = trainer_process.beta_columns((1, 1, 3))
         trainer_start_btn = trainer_start_col.button("trainer_" + str(trainer_id) + "_start")
-        trainer_stop_btn = trainer_stop_col.button("trainer_" + str(trainer_id) + "_end")
+        trainer_stop_btn = trainer_stop_col.button("trainer_" + str(trainer_id) + "_stop")
         trainer_processbar = trainer_processbar_col.progress(0)
         # TODO delete config file
         if trainer_start_btn:

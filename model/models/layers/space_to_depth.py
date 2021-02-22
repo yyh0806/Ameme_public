@@ -16,7 +16,7 @@ class SpaceToDepth(nn.Module):
         return x
 
 
-@torch.jit.script
+# @torch.jit.script
 class SpaceToDepthJit(object):
     def __call__(self, x: torch.Tensor):
         # assuming hard-coded that block_size==4 for acceleration
