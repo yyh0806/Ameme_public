@@ -60,6 +60,32 @@ if __name__ == "__main__":
     metric_selects = trainer_container.multiselect("Metric", metric_selections, default="accuracy")
     add_btn = trainer_container.button("Add Trainer")
 
+    max_width = 1600
+    padding_top = 1
+    padding_right = 1
+    padding_left = 1
+    padding_bottom = 1
+    COLOR = (255, 255, 255)
+    BACKGROUND_COLOR = (0, 0, 0)
+
+    st.markdown(
+        f"""
+    <style>
+        .reportview-container .main .block-container{{
+            max-width: {max_width}px;
+            padding-top: {padding_top}rem;
+            padding-right: {padding_right}rem;
+            padding-left: {padding_left}rem;
+            padding-bottom: {padding_bottom}rem;
+        }}
+        .reportview-container .main {{
+            color: {COLOR};
+            background-color: {BACKGROUND_COLOR};
+        }}
+    </style>
+    """,
+        unsafe_allow_html=True,
+    )
     sessions = session.get(
         key=0,
         id=0,
@@ -105,15 +131,16 @@ if __name__ == "__main__":
         trainer_metrics = trainer["metrics"]
 
         trainer_params_container = st.beta_container()
+        trainer_params_container.header("trainer_"+str(trainer_id))
         model_params_col, optimizer_params_col, scheduler_params_col = trainer_params_container.beta_columns(3)
 
-        model_params_col.header("model")
-        optimizer_params_col.header("optimizer")
-        scheduler_params_col.header("scheduler")
+        # model_params_col.header("model")
+        # optimizer_params_col.header("optimizer")
+        # scheduler_params_col.header("scheduler")
 
-        model_params_col_ex = model_params_col.beta_expander("params")
-        optimizer_params_col_ex = optimizer_params_col.beta_expander("params")
-        scheduler_params_col_ex = scheduler_params_col.beta_expander("params")
+        model_params_col_ex = model_params_col.beta_expander("model params")
+        optimizer_params_col_ex = optimizer_params_col.beta_expander("optimizer params")
+        scheduler_params_col_ex = scheduler_params_col.beta_expander("scheduler params")
 
         model_params = {}
         optimizer_params = {}
@@ -183,17 +210,21 @@ if __name__ == "__main__":
                 else:
                     sessions.trainer_params[trainer_id]["scheduler_params"][name] = param.annotation(eval(param_input))
 
-        trainer_process = st.beta_container()
-        epochs_col, trainer_start_col, trainer_stop_col, trainer_processbar_col = trainer_process.beta_columns((2, 1, 1, 2))
-        epochs_input = epochs_col.number_input("epochs", min_value=1, max_value=1000, value=20)
-        trainer_start_btn = trainer_start_col.button("trainer_" + str(trainer_id) + "_start")
-        trainer_stop_btn = trainer_stop_col.button("trainer_" + str(trainer_id) + "_stop")
-        trainer_processbar = trainer_processbar_col.progress(0)
+        trainer_params_callback = {"processBar": 0, "train_metric": {}}
+        trainer_process = st.beta_expander("train")
+        trainer_control_col, trainer_graphic_col = trainer_process.beta_columns((1, 2))
+        trainer_seed = trainer_control_col.number_input("train_"+str(trainer_id)+"_seed", min_value=0, max_value=10000, value=86)
+        trainer_epoch = trainer_control_col.number_input("train_"+str(trainer_id)+"_epochs", min_value=1, max_value=1000, value=20)
+        trainer_save_path = trainer_control_col.text_input("train_"+str(trainer_id)+"_save_path", value=trainer_dataloader + '/' + str(trainer_id) + '/')
+        trainer_start_btn = trainer_control_col.button("trainer_" + str(trainer_id) + "_start")
+        trainer_stop_btn = trainer_control_col.button("trainer_" + str(trainer_id) + "_stop")
+        trainer_chart = trainer_graphic_col.empty()
         # TODO delete config file
         if trainer_start_btn:
-            setup_logging('trainer_' + str(trainer_id))
             logger = logging.getLogger()
-            seed_everything(cfg['SEED'])
+            seed_everything(trainer_seed)
+            logger.info(trainer)
+            logger.info("seed: {}, save_dir: {}", str(trainer_seed), str(trainer_save_path))
             # data
             data_loader = eval("data_module." + trainer_dataloader + "DataLoader")(**cfg["DATA_LOADER"]["ARGS"])
             valid_data_loader = data_loader.split_validation()
@@ -217,7 +248,7 @@ if __name__ == "__main__":
             lr_scheduler = eval("scheduler_module." + trainer_scheduler)(**sessions.trainer_params[trainer_id][
                 'scheduler_params'],
                                                                          optimizer=optimizer)
-            trainer_epoch = epochs_input
+            setup_logging(trainer_save_path)
             trainer = Trainer(model=model,
                               criterion=criterion,
                               metrics=metrics,
@@ -227,10 +258,8 @@ if __name__ == "__main__":
                               data_loader=data_loader,
                               valid_data_loader=valid_data_loader,
                               lr_scheduler=lr_scheduler,
-                              st_process=trainer_processbar,
-                              st_stop=trainer_stop_btn)
+                              sts=[trainer_stop_btn, trainer_chart, trainer_save_path])
             trainer.train()
-            trainer_start_btn = None
 
-        if trainer_stop_btn:
-            pass
+
+

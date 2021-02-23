@@ -7,12 +7,13 @@ from logger.logger import setup_logging
 from visdom import Visdom
 from tqdm import tqdm
 from torch.cuda.amp import autocast, GradScaler
+import pandas as pd
 
 
 class Trainer(TrainerBase):
-    def __init__(self, model, epoch, criterion, metrics, optimizer,  device, data_loader, valid_data_loader=None,
-                 lr_scheduler=None, len_epoch=None, checkpoint=None, st_process=None, st_stop=False):
-        super().__init__(model, criterion, metrics, optimizer, epoch, checkpoint, st_stop=st_stop)
+    def __init__(self, model, epoch, criterion, metrics, optimizer, device, data_loader, valid_data_loader=None,
+                 lr_scheduler=None, len_epoch=None, checkpoint=None, sts=[]):  # sts=[stop, st_empty, save_dir]
+        super().__init__(model, criterion, metrics, optimizer, epoch, checkpoint, save_dir=sts[2], st_stop=sts[0])
         self.scaler = GradScaler()
         self.device = device
         self.data_loader = data_loader
@@ -24,9 +25,15 @@ class Trainer(TrainerBase):
         self.valid_data_loader = valid_data_loader
         self.do_validation = self.valid_data_loader is not None
         self.lr_scheduler = lr_scheduler
-        self.processBar = st_process
-        self.st_stop = st_stop
-        self.log_step = int(np.sqrt(data_loader.batch_size))
+
+        self.st_empty = sts[1]
+        self.st_container = self.st_empty.beta_container()
+        self.lossChart = self.st_container.line_chart()
+        self.processBar = self.st_container.progress(0)
+        self.epochResult = self.st_container.table()
+        self.train_idx = 0
+
+        self.log_step = 100
         self.train_metrics = MetricTracker('loss', *[m.__name__ for m in self.metrics], writer=None)
         self.valid_metrics = MetricTracker('loss', *[m.__name__ for m in self.metrics], writer=None)
 
@@ -50,6 +57,8 @@ class Trainer(TrainerBase):
                     self.train_metrics.update(met.__name__, met(output, target))
 
                 if batch_idx % self.log_step == 0:
+                    self.lossChart.add_rows(pd.DataFrame(self.train_metrics.result(), index=[self.train_idx]))
+                    self.train_idx = self.train_idx + 1
                     self.processBar.progress(batch_idx / self.len_epoch)
                 if batch_idx == self.len_epoch:
                     break
@@ -64,6 +73,9 @@ class Trainer(TrainerBase):
                 self.lr_scheduler.step(log["val_loss"])
             else:
                 self.lr_scheduler.step()
+
+        st_res = log.copy()
+        self.epochResult.add_rows(pd.DataFrame(st_res, index=[epoch]))
         return log
 
     def _valid_epoch(self, epoch: int) -> dict:
@@ -79,4 +91,3 @@ class Trainer(TrainerBase):
                 for met in self.metrics:
                     self.valid_metrics.update(met.__name__, met(output, target))
         return self.valid_metrics.result()
-

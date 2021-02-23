@@ -7,13 +7,14 @@ from subprocess import Popen, PIPE
 import yaml
 import torch
 from visdom import Visdom
+from utils.utils import *
 
 
 class TrainerBase:
     """
     Base class for all trainers
     """
-    def __init__(self, model, criterion, metrics, optimizer, epoch, checkpoint=None, st_stop=False):
+    def __init__(self, model, criterion, metrics, optimizer, epoch, checkpoint=None, save_dir=None, st_stop=False):
         self.logger = logging.getLogger("trainer")
 
         self.model = model
@@ -22,7 +23,7 @@ class TrainerBase:
         self.optimizer = optimizer
         self.epochs = epoch
         self.start_epoch = 1
-        self.checkpoint_dir = "./"
+        self.save_dir = ensure_dir(save_dir)
         self.save_period = 1
         self.st_stop = st_stop
         if checkpoint is not None:
@@ -80,11 +81,11 @@ class TrainerBase:
             'state_dict': self.model.state_dict(),
             'optimizer': self.optimizer.state_dict(),
         }
-        filename = self.checkpoint_dir / f'checkpoint-epoch{epoch}.pth'
+        filename = self.save_dir + "/" + f'checkpoint-epoch{epoch}.pth'
         torch.save(state, filename)
         self.logger.info(f"Saving checkpoint: {filename} ...")
         if save_best:
-            best_path = self.checkpoint_dir / 'model_best.pth'
+            best_path = self.save_dir + "/" + 'model_best.pth'
             torch.save(state, best_path)
             self.logger.info(f'Saving current best: {best_path}')
 

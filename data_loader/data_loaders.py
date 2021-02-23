@@ -24,3 +24,19 @@ class CassavaDataLoader(DataLoaderBase):
             'num_workers': num_workers
         }
         super().__init__(self.train_dataset, batch_size, shuffle, validation_split, num_workers)
+
+
+class MnistDataLoader(DataLoaderBase):
+    """
+    MNIST data loading demo using BaseDataLoader
+    """
+
+    def __init__(self, data_dir: str, batch_size: int, shuffle: bool = True, validation_split: float = 0.0,
+                 num_workers=0, training=True):
+        trsfm = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,))
+        ])
+        self.data_dir = data_dir
+        self.dataset = datasets.MNIST(self.data_dir, train=training, download=True, transform=trsfm)
+        super().__init__(self.dataset, batch_size, shuffle, validation_split, num_workers)
