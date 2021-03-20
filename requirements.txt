@@ -4,7 +4,7 @@ argon2-cffi==20.1.0
 astor==0.8.1
 async-generator==1.10
 atomicwrites==1.4.0
-attrs @ file:///tmp/build/80754af9/attrs_1604765588209/work
+
 backcall==0.2.0
 base58==2.1.0
 bleach==3.3.0
@@ -12,14 +12,11 @@ blinker==1.4
 brotlipy==0.7.0
 cachetools==4.2.1
 certifi==2020.12.5
-cffi @ file:///C:/ci/cffi_1606255208697/work
-chardet @ file:///C:/ci/chardet_1605303225733/work
+
 click==7.1.2
-colorama @ file:///tmp/build/80754af9/colorama_1607707115595/work
-configparser @ file:///tmp/build/80754af9/configparser_1602256123427/work
-cryptography @ file:///C:/ci/cryptography_1607522752839/work
+
 cycler==0.10.0
-Cython @ file:///C:/ci/cython_1605457704149/work
+
 decorator==4.4.2
 defusedxml==0.6.0
 entrypoints==0.3
@@ -28,7 +25,7 @@ GitPython==3.1.13
 idna==2.10
 imageio==2.9.0
 imgaug==0.4.0
-iniconfig @ file:///tmp/build/80754af9/iniconfig_1602780191262/work
+
 ipykernel==5.4.3
 ipython==7.20.0
 ipython-genutils==0.2.0
@@ -43,14 +40,14 @@ jupyter-client==6.1.11
 jupyter-core==4.7.1
 jupyterlab-pygments==0.1.2
 jupyterlab-widgets==1.0.0
-kiwisolver @ file:///C:/ci/kiwisolver_1604014703538/work
+
 MarkupSafe==1.1.1
-matplotlib @ file:///C:/ci/matplotlib-base_1603355780617/work
+
 mistune==0.8.4
 mkl-fft==1.2.0
 mkl-random==1.1.1
 mkl-service==2.3.0
-more-itertools @ file:///tmp/build/80754af9/more-itertools_1605111547926/work
+
 nbclient==0.5.2
 nbconvert==6.0.7
 nbformat==5.1.2
@@ -61,25 +58,25 @@ numpy==1.17.4
 olefile==0.46
 opencv-python==4.5.1.48
 opencv-python-headless==4.5.1.48
-packaging @ file:///tmp/build/80754af9/packaging_1606930849755/work
+
 pandas==1.2.2
 pandocfilters==1.4.3
 parso==0.8.1
 pickleshare==0.7.5
-Pillow @ file:///C:/ci/pillow_1603823068645/work
+
 pluggy==0.13.1
 prometheus-client==0.9.0
 prompt-toolkit==3.0.16
 protobuf==3.15.0
-py @ file:///tmp/build/80754af9/py_1593446248552/work
+
 pyarrow==3.0.0
 pycparser==2.19
 pydeck==0.6.1
 Pygments==2.8.0
-pyOpenSSL @ file:///tmp/build/80754af9/pyopenssl_1606517880428/work
+
 pyparsing==2.4.0
 pyrsistent==0.17.3
-PySocks @ file:///C:/ci/pysocks_1605287845585/work
+
 pytest==6.2.2
 pytest-runner==5.2
 python-dateutil==2.8.1
@@ -105,16 +102,16 @@ terminado==0.9.2
 testpath==0.4.4
 threadpoolctl==2.1.0
 tifffile==2021.2.1
-toml @ file:///tmp/build/80754af9/toml_1592853716807/work
+
 toolz==0.11.1
 torch==1.7.1
 torchaudio==0.7.2
 torchfile==0.1.0
 torchvision==0.8.2
-tornado @ file:///C:/ci/tornado_1606942392901/work
+
 tqdm==4.57.0
 traitlets==5.0.5
-typing-extensions @ file:///tmp/build/80754af9/typing_extensions_1598376058250/work
+
 tzlocal==2.1
 urllib3==1.26.3
 validators==0.18.2
@@ -124,6 +121,6 @@ wcwidth==0.2.5
 webencodings==0.5.1
 websocket-client==0.57.0
 widgetsnbextension==3.5.1
-win-inet-pton @ file:///C:/ci/win_inet_pton_1605306167264/work
+
 wincertstore==0.2
 yacs==0.1.8
