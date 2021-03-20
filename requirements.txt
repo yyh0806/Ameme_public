@@ -109,7 +109,7 @@ torchfile==0.1.0
 torchvision==0.8.2
 
 tqdm==4.57.0
-traitlets==5.0.5
+traitlets==4.3.3
 
 tzlocal==2.1
 urllib3==1.26.3
