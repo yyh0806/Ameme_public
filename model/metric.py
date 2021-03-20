@@ -1,4 +1,6 @@
 import torch
+import numpy as np
+from sklearn.metrics import roc_auc_score
 from utils import top_k_acc as _top_k_acc
 
 
@@ -17,3 +19,15 @@ def accuracy(output, target):
         correct = 0
         correct += torch.sum(pred == target).item()
     return correct / len(target)
+
+
+def AUC(output, target):
+    output = np.array(output)
+    target = np.array(target)
+    scores = []
+    for i in range(target.shape[1]):
+        score = roc_auc_score(target[:, i], output[:, i])
+        scores.append(score)
+    avg_score = np.mean(scores)
+    return avg_score
+

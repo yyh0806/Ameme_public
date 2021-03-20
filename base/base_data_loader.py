@@ -3,6 +3,7 @@ import torch
 from torch.utils.data import DataLoader
 from torch.utils.data.dataloader import default_collate
 from torch.utils.data.sampler import SubsetRandomSampler, WeightedRandomSampler
+from sklearn.model_selection import KFold, StratifiedKFold
 
 
 class DataLoaderBase(DataLoader):
@@ -10,7 +11,7 @@ class DataLoaderBase(DataLoader):
     Base class for all data loaders
     """
 
-    def __init__(self, dataset, batch_size, shuffle, validation_split, num_workers, collate_fn=default_collate):
+    def __init__(self, dataset, batch_size, shuffle, validation_split, num_workers=0, collate_fn=default_collate):
         self.validation_split = validation_split
         self.shuffle = shuffle
 
@@ -53,6 +54,21 @@ class DataLoaderBase(DataLoader):
         self.n_samples = len(train_idx)
 
         return train_sampler, valid_sampler
+
+    def xfold_split_sampler(self, n_splits):
+        idx_full = np.arange(self.n_samples)
+        if isinstance(n_splits, int):
+            assert n_splits > 0
+            assert n_splits < self.n_samples, "validation set size is configured to be larger than entire dataset."
+        kf = KFold(n_splits=n_splits)
+        res = []
+        for train_idx, valid_idx in kf.split(idx_full):
+            train_sampler = SubsetRandomSampler(train_idx)
+            valid_sampler = SubsetRandomSampler(valid_idx)
+            train_DataLoader = DataLoader(sampler=train_sampler, **self.init_kwargs)
+            valid_DataLoader = DataLoader(sampler=valid_sampler, **self.init_kwargs)
+            res.append((train_DataLoader, valid_DataLoader))
+        return res
 
     def split_validation(self):
         if self.valid_sampler is None:

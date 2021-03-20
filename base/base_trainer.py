@@ -66,6 +66,10 @@ class TrainerBase:
         """
         raise NotImplementedError
 
+    def _calculate_loss(self, data, target):
+        raise NotImplementedError(
+            "calculate_loss should be implemented by subclass!")
+
     def _save_checkpoint(self, epoch: int, save_best: bool = False) -> None:
         """
         Saving checkpoints

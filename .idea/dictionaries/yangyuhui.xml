@@ -2,10 +2,19 @@
   <dictionary name="yangyuhui">
     <words>
       <w>ameme</w>
+      <w>dataloader</w>
       <w>datapath</w>
+      <w>efficientnet</w>
       <w>logprobs</w>
+      <w>nfold</w>
       <w>optim</w>
+      <w>pretrained</w>
+      <w>processbar</w>
+      <w>ranzcr</w>
+      <w>resnet</w>
+      <w>scaler</w>
       <w>visdom</w>
+      <w>xfold</w>
     </words>
   </dictionary>
 </component>

@@ -1,87 +1,50 @@
 import argparse
 import collections
 import torch
-
+import numpy as np
 import data_loader.data_loaders as module_data
 import loss.loss as module_loss
 import model.metric as module_metric
 from utils import prepare_device, seed_everything, MyEnsemble
-from utils.parse_config import ConfigParser
 from utils import MetricTracker
 from tqdm import tqdm
+import logging
 
 
 class Eval:
 
-    def __init__(self, models, criterion, metrics, config, device, valid_data_loader, logger):
-        self.models = models
+    def __init__(self, models, criterion, metrics, device):
         self.criterion = criterion
-        self.config = config
+        self.models = models
         self.device = device
         self.metrics = metrics
-        self.valid_data_loader = valid_data_loader
         self.valid_metrics = MetricTracker('loss', *[m.__name__ for m in self.metrics], writer=None)
-        self.cfg = ConfigParser(config)
-        self.logger = logger
+        self.logger = logging.getLogger()
 
-    def _ensemble(self):
-        model = MyEnsemble(self.models)
-        return model
-
-    def eval(self):
-        model = self._ensemble()
-        model.eval()
+    def eval(self, valid_data_loader):
+        for model in self.models:
+            model.eval()
         self.valid_metrics.reset()
+        outputs = []
+        targets = []
         with torch.no_grad():
-            for batch_idx, (data, target) in enumerate(tqdm(self.valid_data_loader)):
+            tk = tqdm(enumerate(valid_data_loader), total=len(valid_data_loader))
+            for batch_idx, (data, target) in tk:
                 data, target = data.to(self.device), target.to(self.device)
-                output = model(data)
-                loss = self.criterion(output, target)
+                for model in self.models:
+                    output = model(data)
+                    output2 = model(data.flip(-1))
+                    loss = self.criterion(output, target)
+
+                    outputs.append(
+                        (output.sigmoid().detach().cpu().numpy() + output2.sigmoid().detach().cpu().numpy()) / 2)
+                    targets.append(target.cpu().numpy())
+
                 self.valid_metrics.update('loss', loss.item())
-                for met in self.metrics:
-                    self.valid_metrics.update(met.__name__, met(output, target))
-
-            for key, value in self.valid_metrics.result().items():
-                self.logger.info(f'{str(key):15s}: {value}')
-
-
-if __name__ == "__main__":
-    args = argparse.ArgumentParser(description='PyTorch Template')
-    args.add_argument('-c', '--config', default="experiments/cassava_config.yml", type=str,
-                      help='config file path (default: None)')
-    args.add_argument('-r', '--resume', default=None, type=str,
-                      help='path to latest checkpoint (default: None)')
-    args.add_argument('-d', '--device', default=None, type=str,
-                      help='indices of GPUs to enable (default: all)')
-    # custom cli options to modify configuration from default values given in json file.
-    CustomArgs = collections.namedtuple('CustomArgs', 'flags type target')
-    options = [
-        CustomArgs(['--bs', '--batch_size'], type=int, target='data_loader;args;batch_size')
-    ]
-    cfg = ConfigParser.from_args(args, options)
-
-    logger = cfg.get_logger('eval')
-    logger.debug(f'eval: {cfg}')
-    seed_everything(cfg['seed'])
-    # setup data_loader instances
-    data_loader = cfg.init_obj('data_loader', module_data)
-    valid_data_loader = data_loader.split_validation()
-    # prepare for (multi-device) GPU training
-    device, device_ids = prepare_device(cfg['n_gpu'])
-    # build model architecture, then print to console
-    eval_models = cfg.config['eval']
-    models = []
-    for model_dict in eval_models:
-        for model_name, load_path in model_dict.items():
-            model = cfg.init_model(model_name, cfg.config['arch']['args']['num_classes'])
-            model.load_state_dict(torch.load(load_path)['state_dict'])
-            models.append(model.to(device))
-
-    # get function handles of loss and metrics
-    criterion = getattr(module_loss, cfg.config['loss'])
-    metrics = [getattr(module_metric, met) for met in cfg.config['metrics']]
-
-    eval = Eval(models, criterion, metrics, config=cfg.config, device=device, valid_data_loader=valid_data_loader,
-                logger=logger)
-
-    eval.eval()
+                tk.set_description("loss: %.6f" % loss.item())
+        outputs = np.concatenate(outputs)
+        targets = np.concatenate(targets)
+        for met in self.metrics:
+            self.valid_metrics.update(met.__name__, met(outputs, targets))
+        self.logger.info(self.valid_metrics.result())
+        return self.valid_metrics.result()

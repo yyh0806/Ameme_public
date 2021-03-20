@@ -6,8 +6,8 @@ from torchvision.transforms import transforms
 from base import DataLoaderBase
 from PIL import Image
 import os
-from data_loader.datasets import CassavaDataset
-from data_loader.augmentation import CassavaTransforms
+from data_loader.datasets import *
+from data_loader.augmentation import *
 import numpy as np
 import pandas as pd
 
@@ -40,3 +40,20 @@ class MnistDataLoader(DataLoaderBase):
         self.data_dir = data_dir
         self.dataset = datasets.MNIST(self.data_dir, train=training, download=True, transform=trsfm)
         super().__init__(self.dataset, batch_size, shuffle, validation_split, num_workers)
+
+
+class RanzcrDataLoader(DataLoaderBase):
+
+    def __init__(self, data_dir, batch_size, shuffle=True, validation_split=0.0, num_workers=0):
+        df = pd.read_csv("E:/kaggle/ranzcr-clip-catheter-line-classification/" + 'train.csv')
+        paths = "E:/kaggle/ranzcr-clip-catheter-line-classification/train/" + df['StudyInstanceUID'] + '.jpg'
+        sub_df = pd.read_csv("E:/kaggle/ranzcr-clip-catheter-line-classification/sample_submission.csv")
+        label_cols = sub_df.columns[1:]
+        labels = df[label_cols].values
+        transforms = RanzcrTransforms()
+        self.train_dataset = RanzcrDataset(data_dir, paths, labels, transforms)
+        self.init_kwargs = {
+            'batch_size': batch_size,
+            'num_workers': num_workers
+        }
+        super().__init__(self.train_dataset, batch_size, shuffle, 3000, num_workers)

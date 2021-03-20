@@ -46,8 +46,7 @@ class Trainer(TrainerBase):
             with autocast():
                 data, target = data.to(self.device), target.to(self.device)
                 self.optimizer.zero_grad()
-                output = self.model(data)
-                loss = self.criterion(output, target)
+                output, loss = self._calculate_loss(data, target)
                 self.train_metrics.update('loss', loss.item())
                 self.scaler.scale(loss).backward()
                 self.scaler.step(self.optimizer)
@@ -91,3 +90,8 @@ class Trainer(TrainerBase):
                 for met in self.metrics:
                     self.valid_metrics.update(met.__name__, met(output, target))
         return self.valid_metrics.result()
+
+    def _calculate_loss(self, data, target):
+        output = self.model(data)
+        loss = self.criterion(output, target)
+        return output, loss

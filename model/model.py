@@ -37,6 +37,56 @@ class Efficient_b4(ModelBase):
         return x
 
 
+class Efficient_b6(ModelBase):
+    def __init__(self, num_classes: int):
+        """
+
+        :param num_classes: int
+        """
+        super(Efficient_b6, self).__init__()
+        self.model = create_model('tf_efficientnet_b6_ns', num_classes=num_classes, pretrained=True)
+
+    def forward(self, x):
+        x = self.model(x)
+        return x
+
+
+class ResNet50D(nn.Module):
+    def __init__(self, num_classes: int):
+        super().__init__()
+        self.model = create_model('resnet50d', pretrained=False)
+        n_features = self.model.fc.in_features
+        self.model.global_pool = nn.Identity()
+        self.model.fc = nn.Identity()
+        self.pooling = nn.AdaptiveAvgPool2d(1)
+        self.fc = nn.Linear(n_features, num_classes)
+
+    def forward(self, x):
+        bs = x.size(0)
+        features = self.model(x)
+        pooled_features = self.pooling(features).view(bs, -1)
+        output = self.fc(pooled_features)
+        return output
+
+
+class ResNet200D(nn.Module):
+    def __init__(self, num_classes: int):
+        super().__init__()
+        self.model = create_model('resnet200d', pretrained=False)
+        n_features = self.model.fc.in_features
+        self.model.global_pool = nn.Identity()
+        self.model.fc = nn.Identity()
+        self.pooling = nn.AdaptiveAvgPool2d(1)
+        self.fc = nn.Linear(n_features, num_classes)
+
+    def forward(self, x):
+        bs = x.size(0)
+        features = self.model(x)
+        pooled_features = self.pooling(features).view(bs, -1)
+        output = self.fc(pooled_features)
+        return output
+
+
 class ViTBase16(ModelBase):
     def __init__(self, num_classes: int):
         """
