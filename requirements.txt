@@ -100,7 +100,7 @@ streamlit-aggrid==0.1.9
 terminado==0.9.2
 testpath==0.4.4
 threadpoolctl==2.1.0
-tifffile==2021.2.1
+tifffile==2020.9.3
 
 toolz==0.11.1
 torch==1.7.1
