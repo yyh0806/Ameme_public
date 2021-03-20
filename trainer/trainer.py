@@ -4,7 +4,6 @@ from torchvision.utils import make_grid
 from utils import inf_loop, MetricTracker, mixup_data, mix_criterion, VisdomLinePlotter, cutmix_data
 from base import TrainerBase
 from logger.logger import setup_logging
-from visdom import Visdom
 from tqdm import tqdm
 from torch.cuda.amp import autocast, GradScaler
 import pandas as pd
