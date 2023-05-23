@@ -23,7 +23,7 @@ pyrsistent==0.17.3
 pywinpty==0.5.7
 PyYAML==5.4.1
 pyzmq==22.0.3
-requests==2.25.1
+requests==2.31.0
 scikit-image==0.17.1
 scikit-learn==0.24.1
 scipy==1.5.4
